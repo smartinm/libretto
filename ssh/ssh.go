@@ -362,7 +362,7 @@ func (client *SSHClient) Upload(src io.Reader, dst string, mode uint32) error {
 		}
 		defer w.Close()
 
-		// Signals to the SSH reciever that content is being passed.
+		// Signals to the SSH receiver that content is being passed.
 		fmt.Fprintf(w, "C%#o %d %s\n", mode, len(fileContent), remoteFileName)
 		_, err = io.Copy(w, bytes.NewReader(fileContent))
 		if err != nil {
