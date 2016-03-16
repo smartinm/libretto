@@ -220,7 +220,7 @@ func TestGetDatacenterFinderError(t *testing.T) {
 func TestGetDatacenterPropertyError(t *testing.T) {
 	f := mockFinder{}
 	f.MockDatacenterList = func(context.Context, string) ([]*object.Datacenter, error) {
-		return []*object.Datacenter{&object.Datacenter{}}, nil
+		return []*object.Datacenter{{}}, nil
 	}
 	c := mockCollector{}
 	c.MockRetrieveOne = func(context.Context, types.ManagedObjectReference, []string, interface{}) error {
@@ -243,7 +243,7 @@ func TestGetDatacenterPropertyError(t *testing.T) {
 func TestGetDatacenterHappyPath(t *testing.T) {
 	f := mockFinder{}
 	f.MockDatacenterList = func(context.Context, string) ([]*object.Datacenter, error) {
-		return []*object.Datacenter{&object.Datacenter{}}, nil
+		return []*object.Datacenter{{}}, nil
 	}
 	c := mockCollector{}
 	c.MockRetrieveOne = func(_ context.Context, _ types.ManagedObjectReference, _ []string, dst interface{}) error {
@@ -346,7 +346,7 @@ func TestGetDatastorePropertyError(t *testing.T) {
 		return errors.New("failed to retrieve property")
 	}
 	// Create a datacenter with one datastore
-	dc := mo.Datacenter{Datastore: []types.ManagedObjectReference{types.ManagedObjectReference{}}}
+	dc := mo.Datacenter{Datastore: []types.ManagedObjectReference{{}}}
 	vm := &VM{
 		Host:       "1.1.1.1",
 		Username:   "root",
@@ -368,7 +368,7 @@ func TestGetDatastoreHappyPath(t *testing.T) {
 		return nil
 	}
 	// Create a datacenter with one datastore
-	dc := mo.Datacenter{Datastore: []types.ManagedObjectReference{types.ManagedObjectReference{}}}
+	dc := mo.Datacenter{Datastore: []types.ManagedObjectReference{{}}}
 	vm := &VM{
 		Host:       "1.1.1.1",
 		Username:   "root",
@@ -464,7 +464,7 @@ func TestCreateNetworkMapping(t *testing.T) {
 		"nw1": "mapping1",
 		"nw3": "mapping2",
 	}
-	networkMors := []types.ManagedObjectReference{types.ManagedObjectReference{Type: "Network"}, types.ManagedObjectReference{Type: "Network"}}
+	networkMors := []types.ManagedObjectReference{{Type: "Network"}, {Type: "Network"}}
 	callCount := 1 //First call
 	c := mockCollector{}
 	c.MockRetrieveOne = func(c context.Context, t types.ManagedObjectReference, ps []string, dst interface{}) error {
@@ -497,7 +497,7 @@ func TestCreateNetworkMappingPropertyFailed(t *testing.T) {
 		"nw1": "mapping1",
 		"nw3": "mapping2",
 	}
-	networkMors := []types.ManagedObjectReference{types.ManagedObjectReference{Type: "Network"}, types.ManagedObjectReference{Type: "Network"}}
+	networkMors := []types.ManagedObjectReference{{Type: "Network"}, {Type: "Network"}}
 	c := mockCollector{}
 	expectedError := "failed to retrieve property"
 	c.MockRetrieveOne = func(c context.Context, t types.ManagedObjectReference, ps []string, dst interface{}) error {
@@ -520,7 +520,7 @@ func TestCreateObjectError(t *testing.T) {
 		"nw1": "mapping1",
 		"nw3": "mapping2",
 	}
-	networkMors := []types.ManagedObjectReference{types.ManagedObjectReference{Type: "Network"}, types.ManagedObjectReference{Type: "Network"}}
+	networkMors := []types.ManagedObjectReference{{Type: "Network"}, {Type: "Network"}}
 	c := mockCollector{}
 	c.MockRetrieveOne = func(c context.Context, t types.ManagedObjectReference, ps []string, dst interface{}) error {
 		nw := dst.(*mo.Network)
@@ -580,7 +580,7 @@ func TestUploadOvfOpenError(t *testing.T) {
 		MockWait: func() (*types.HttpNfcLeaseInfo, error) {
 			li := types.HttpNfcLeaseInfo{
 				DeviceUrl: []types.HttpNfcLeaseDeviceUrl{
-					types.HttpNfcLeaseDeviceUrl{
+					{
 						Url: "http://*/",
 					},
 				},
@@ -599,7 +599,7 @@ func TestUploadOvfOpenError(t *testing.T) {
 	vm := VM{}
 	sr := types.OvfCreateImportSpecResult{
 		FileItem: []types.OvfFileItem{
-			types.OvfFileItem{},
+			{},
 		},
 	}
 	err := uploadOvf(&vm, &sr, l)
@@ -613,7 +613,7 @@ func TestUploadOvfCreateRequestError(t *testing.T) {
 		MockWait: func() (*types.HttpNfcLeaseInfo, error) {
 			li := types.HttpNfcLeaseInfo{
 				DeviceUrl: []types.HttpNfcLeaseDeviceUrl{
-					types.HttpNfcLeaseDeviceUrl{
+					{
 						Url: "http://*/",
 					},
 				},
@@ -644,7 +644,7 @@ func TestUploadOvfCreateRequestError(t *testing.T) {
 	vm := VM{}
 	sr := types.OvfCreateImportSpecResult{
 		FileItem: []types.OvfFileItem{
-			types.OvfFileItem{},
+			{},
 		},
 	}
 	err := uploadOvf(&vm, &sr, l)
@@ -658,7 +658,7 @@ func TestUploadOvfHappyPath(t *testing.T) {
 		MockWait: func() (*types.HttpNfcLeaseInfo, error) {
 			li := types.HttpNfcLeaseInfo{
 				DeviceUrl: []types.HttpNfcLeaseDeviceUrl{
-					types.HttpNfcLeaseDeviceUrl{
+					{
 						Url: "http://*/",
 					},
 				},
@@ -693,7 +693,7 @@ func TestUploadOvfHappyPath(t *testing.T) {
 	vm := VM{}
 	sr := types.OvfCreateImportSpecResult{
 		FileItem: []types.OvfFileItem{
-			types.OvfFileItem{},
+			{},
 		},
 	}
 	err := uploadOvf(&vm, &sr, l)
