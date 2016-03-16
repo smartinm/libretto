@@ -1,4 +1,4 @@
- Libretto
+Libretto
 ===============
 
 Libretto is a Golang library to create Virtual Machines (VM) on any cloud and
