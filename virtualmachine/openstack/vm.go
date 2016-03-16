@@ -86,7 +86,7 @@ const (
 
 // ImageMetadata represents what kind of Image will be loaded to the VM
 type ImageMetadata struct {
-	// Contianer Format for the Image, Required
+	// Container Format for the Image, Required
 	ContainerFormat string `json:"container_format,omitempty"`
 	// Disk Format of the Image, Required
 	DiskFormat string `json:"disk_format,omitempty"`

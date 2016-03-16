@@ -324,7 +324,7 @@ func (vm *VM) requestIPs() []net.IP {
 
 func (vm *VM) waitUntilReady() error {
 	errorChannel := make(chan error, 1)
-	// Wait upto 90s until the VM boots up
+	// Wait up to 90s until the VM boots up
 	timer := time.NewTimer(time.Second * 90)
 	go func() {
 		err := vm.Start()
