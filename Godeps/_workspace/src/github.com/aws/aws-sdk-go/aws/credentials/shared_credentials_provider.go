@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/go-ini/ini"
+	"github.com/apcera/libretto/Godeps/_workspace/src/github.com/go-ini/ini"
 
 	"github.com/apcera/libretto/Godeps/_workspace/src/github.com/aws/aws-sdk-go/aws/awserr"
 )
