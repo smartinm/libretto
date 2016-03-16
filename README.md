@@ -1,3 +1,4 @@
+[![License][License-Image]][License-URL] [![ReportCard][ReportCard-Image]][ReportCard-URL] [![Build][Build-Status-Image]][Build-Status-URL]
 Libretto
 ===============
 
@@ -262,3 +263,10 @@ Dependencies should be versioned and stored using `Godeps`
 Errors should be lower case so that they can be wrapped by the calling code. If
 possible, types defined in the top level `virtualmachine` package should be
 reused.
+
+[License-URL]: https://opensource.org/licenses/Apache-2.0
+[License-Image]: https://img.shields.io/:license-apache-blue.svg
+[ReportCard-URL]: https://goreportcard.com/report/github.com/apcera/libretto
+[ReportCard-Image]: http://goreportcard.com/badge/apcera/libretto
+[Build-Status-URL]: http://travis-ci.org/apcera/libretto
+[Build-Status-Image]: https://travis-ci.org/apcera/libretto.svg?branch=master
