@@ -413,7 +413,8 @@ func (vm *VM) GetName() string {
 	return vm.Name
 }
 
-// GetIPs returns the IPs of this VM.
+// GetIPs returns the IPs of this VM. Returns all the IPs known to the API for
+// the different network cards for this VM. Includes IPV4 and IPV6 addresses.
 func (vm *VM) GetIPs() []net.IP {
 	if err := setupSession(vm); err != nil {
 		return nil
@@ -429,11 +430,21 @@ func (vm *VM) GetIPs() []net.IP {
 	if err != nil {
 		return nil
 	}
-	ip := net.ParseIP(vmMo.Guest.IpAddress)
-	if ip != nil {
-		return []net.IP{ip}
+	// Lazy initialized when there is an IP address later.
+	var ips []net.IP
+	for _, nic := range vmMo.Guest.Net {
+		for _, ip := range nic.IpAddress {
+			netIP := net.ParseIP(ip)
+			if netIP == nil {
+				continue
+			}
+			if ips == nil {
+				ips = make([]net.IP, 0, 1)
+			}
+			ips = append(ips, netIP)
+		}
 	}
-	return nil
+	return ips
 }
 
 // Destroy deletes this VM from vSphere.
