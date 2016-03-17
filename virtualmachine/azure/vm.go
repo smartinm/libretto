@@ -8,11 +8,10 @@ import (
 	"net"
 	"time"
 
-	"github.com/apcera/libretto/ssh"
-
 	"github.com/apcera/libretto/Godeps/_workspace/src/github.com/Azure/azure-sdk-for-go/management/virtualmachine"
 	"github.com/apcera/libretto/Godeps/_workspace/src/github.com/Azure/azure-sdk-for-go/management/vmutils"
 
+	"github.com/apcera/libretto/ssh"
 	lvm "github.com/apcera/libretto/virtualmachine"
 )
 
@@ -32,6 +31,8 @@ const (
 	errMsgTimeout     = "Time out waiting for instance to %s"
 	errProvisionVM    = "Error to provision Azure VM %s"
 )
+
+var _ lvm.VirtualMachine = (*VM)(nil)
 
 // VM represents an Azure virtual machine.
 type VM struct {
@@ -150,17 +151,16 @@ func (vm *VM) Provision() error {
 	return nil
 }
 
-// GetIPs returns the IP addresses of the Azure VM instance. It returns nil if
-// there is a problem trying to retrieve the IPs.
-func (vm *VM) GetIPs() []net.IP {
+// GetIPs returns the IP addresses of the Azure VM instance.
+func (vm *VM) GetIPs() ([]net.IP, error) {
 	vmclient, err := vm.getVMClient()
 	if err != nil {
-		return nil
+		return nil, err
 	}
 
 	resp, err := vmclient.GetDeployment(vm.ServiceName, vm.Name)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 
 	ips := make([]net.IP, 2)
@@ -171,13 +171,16 @@ func (vm *VM) GetIPs() []net.IP {
 		ips[PrivateIP] = net.ParseIP(ip)
 	}
 
-	return ips
+	return ips, nil
 }
 
 // GetSSH returns an SSH client that can be used to connect to the VM. An error
 // is returned if the VM has no IPs.
 func (vm *VM) GetSSH(opts ssh.Options) (ssh.Client, error) {
-	ips := vm.GetIPs()
+	ips, err := vm.GetIPs()
+	if err != nil {
+		return nil, fmt.Errorf("Failed to get ips: %s", err)
+	}
 	if ips == nil || len(ips) < 1 {
 		return nil, lvm.ErrVMNoIP
 	}

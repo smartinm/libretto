@@ -14,7 +14,7 @@ import (
 type VirtualMachine interface {
 	GetName() string
 	Provision() error
-	GetIPs() []net.IP
+	GetIPs() ([]net.IP, error)
 	Destroy() error
 	GetState() (string, error)
 	Suspend() error

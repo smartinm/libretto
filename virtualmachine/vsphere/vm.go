@@ -299,6 +299,8 @@ type Lease interface {
 	Complete() error
 }
 
+var _ lvm.VirtualMachine = (*VM)(nil)
+
 // VM represents a vSphere VM.
 type VM struct {
 	// Host represents the vSphere host to use for creating this VM.
@@ -415,20 +417,20 @@ func (vm *VM) GetName() string {
 
 // GetIPs returns the IPs of this VM. Returns all the IPs known to the API for
 // the different network cards for this VM. Includes IPV4 and IPV6 addresses.
-func (vm *VM) GetIPs() []net.IP {
+func (vm *VM) GetIPs() ([]net.IP, error) {
 	if err := setupSession(vm); err != nil {
-		return nil
+		return nil, err
 	}
 	defer vm.cancel()
 
 	// Get a reference to the datacenter with host and vm folders populated
 	dcMo, err := getDatacenter(vm)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 	vmMo, err := findVM(vm, dcMo, vm.Name)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 	// Lazy initialized when there is an IP address later.
 	var ips []net.IP
@@ -444,7 +446,7 @@ func (vm *VM) GetIPs() []net.IP {
 			ips = append(ips, netIP)
 		}
 	}
-	return ips
+	return ips, nil
 }
 
 // Destroy deletes this VM from vSphere.
@@ -614,7 +616,10 @@ func (vm *VM) Resume() (err error) {
 
 // GetSSH returns an ssh client configured for this VM.
 func (vm *VM) GetSSH(options ssh.Options) (c ssh.Client, err error) {
-	ips := vm.GetIPs()
+	ips, err := vm.GetIPs()
+	if err != nil {
+		return nil, fmt.Errorf("Error getting IPs for the VM: %s", err)
+	}
 	if len(ips) == 0 {
 		return nil, lvm.ErrVMNoIP
 	}
