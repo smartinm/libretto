@@ -4,6 +4,7 @@ package vmrun
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"html/template"
 	"io/ioutil"
@@ -161,9 +162,9 @@ func (vm *VM) Start() error {
 	_, vmxFileName := filepath.Split(src)
 	vm.VmxFilePath = fmt.Sprintf("%s/%s", dst, vmxFileName)
 
-	_, err := runner.RunCombinedError("start", vm.VmxFilePath)
+	out, err := runner.RunCombinedError("start", vm.VmxFilePath, "nogui")
 	if err != nil {
-		return err
+		return lvm.WrapErrors(err, errors.New(out))
 	}
 
 	return nil
