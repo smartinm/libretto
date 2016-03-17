@@ -38,6 +38,8 @@ type VM struct {
 	Droplet     *Droplet
 }
 
+var _ lvm.VirtualMachine = (*VM)(nil)
+
 // Config is the new droplet payload
 type Config struct {
 	Name              string   `json:"name,omitempty"`   // required
@@ -194,10 +196,10 @@ func (vm *VM) Provision() error {
 }
 
 // GetIPs returns a list of ip addresses associated with the VM
-func (vm *VM) GetIPs() []net.IP {
+func (vm *VM) GetIPs() ([]net.IP, error) {
 	var ips []net.IP
 	if err := vm.Update(); err != nil {
-		return ips
+		return nil, err
 	}
 	for _, ip := range vm.Droplet.Networks.V4 {
 		ips = append(ips, net.ParseIP(ip.IPAddress))
@@ -205,12 +207,15 @@ func (vm *VM) GetIPs() []net.IP {
 	for _, ip := range vm.Droplet.Networks.V6 {
 		ips = append(ips, net.ParseIP(ip.IPAddress))
 	}
-	return ips
+	return ips, nil
 }
 
 // GetSSH returns an ssh client for the the vm.
 func (vm *VM) GetSSH(options libssh.Options) (libssh.Client, error) {
-	ips := vm.GetIPs()
+	ips, err := vm.GetIPs()
+	if err != nil {
+		return nil, fmt.Errorf("Error getting IPs for the VM: %s", err)
+	}
 	if len(ips) == 0 {
 		return &libssh.SSHClient{}, lvm.ErrVMNoIP
 	}

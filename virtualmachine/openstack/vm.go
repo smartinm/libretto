@@ -277,23 +277,25 @@ func (vm *VM) Provision() error {
 // GetIPs returns a slice of IP addresses assigned to the VM. The PublicIP or
 // PrivateIP consts can be used to retrieve respective IP address type. It
 // returns nil if there was an error obtaining the IPs.
-func (vm *VM) GetIPs() []net.IP {
+func (vm *VM) GetIPs() ([]net.IP, error) {
 	server, err := getServer(vm)
-	if server == nil || err != nil {
+	if err != nil {
+	}
+	if server == nil {
 		// Probably need to call Provision first.
-		return nil
+		return nil, err
 	}
 
 	client, err := getNetworkClient(vm)
 	if client == nil || err != nil {
 		// Probably need to create some network first.
-		return nil
+		return nil, err
 	}
 	ips := make([]net.IP, 2)
 	for _, networkID := range vm.Networks {
 		network, err := networks.Get(client, networkID).Extract()
 		if err != nil {
-			return nil
+			return nil, err
 		}
 
 		addressSlice := server.Addresses[network.Name].([]interface{})
@@ -310,7 +312,7 @@ func (vm *VM) GetIPs() []net.IP {
 		}
 	}
 
-	return ips
+	return ips, nil
 }
 
 // Destroy terminates the VM on Openstack. It returns an error if there is no instance ID.
@@ -380,7 +382,10 @@ func (vm *VM) Destroy() error {
 // GetSSH returns an SSH client that can be used to connect to a VM. An error is
 // returned if the VM has no IPs.
 func (vm *VM) GetSSH(options ssh.Options) (ssh.Client, error) {
-	ips := vm.GetIPs()
+	ips, err := vm.GetIPs()
+	if err != nil {
+		return nil, fmt.Errorf("Error getting IPs for the VM: %s", err)
+	}
 	if ips == nil || len(ips) < 1 {
 		return nil, lvm.ErrVMNoIP
 	}

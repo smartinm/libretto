@@ -93,7 +93,10 @@ func (vm *VM) GetName() string {
 // GetSSH returns an ssh client for the the vm.
 func (vm *VM) GetSSH(options libssh.Options) (libssh.Client, error) {
 	if len(vm.ips) == 0 {
-		ips := vm.GetIPs()
+		ips, err := vm.GetIPs()
+		if err != nil {
+			return nil, fmt.Errorf("Error getting IPs for the VM: %s", err)
+		}
 		if len(ips) == 0 {
 			return &libssh.SSHClient{}, lvm.ErrVMNoIP
 		}
@@ -159,10 +162,10 @@ func (vm *VM) Resume() error {
 }
 
 // GetIPs returns a list of ip addresses associated with the vm through VBox Guest Additions.
-func (vm *VM) GetIPs() []net.IP {
+func (vm *VM) GetIPs() ([]net.IP, error) {
 	vm.waitUntilReady()
 
-	return vm.ips
+	return vm.ips, nil
 }
 
 // GetState gets the power state of the VM being serviced by this driver.

@@ -17,11 +17,13 @@ type VM struct {
 	MockSuspend   func() error
 	MockResume    func() error
 	MockStart     func() error
-	MockGetIPs    func() []net.IP
+	MockGetIPs    func() ([]net.IP, error)
 	MockGetName   func() string
 	MockGetState  func() (string, error)
 	MockProvision func() error
 }
+
+var _ lvm.VirtualMachine = (*VM)(nil)
 
 // GetName returns the name of the virtual machine
 func (vm *VM) GetName() string {
@@ -80,11 +82,11 @@ func (vm *VM) Start() error {
 }
 
 // GetIPs returns a list of ip addresses associated with the vm through VMware tools
-func (vm *VM) GetIPs() []net.IP {
+func (vm *VM) GetIPs() ([]net.IP, error) {
 	if vm.MockGetIPs != nil {
 		return vm.MockGetIPs()
 	}
-	return []net.IP{}
+	return []net.IP{}, nil
 }
 
 // GetState gets the power state of the VM through VMware tools.

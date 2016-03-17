@@ -186,11 +186,11 @@ func (vm *VM) Provision() error {
 // GetIPs returns a slice of IP addresses assigned to the VM. The PublicIP or
 // PrivateIP consts can be used to retrieve respective IP address type. It
 // returns nil if there was an error obtaining the IPs.
-func (vm *VM) GetIPs() []net.IP {
+func (vm *VM) GetIPs() ([]net.IP, error) {
 	svc := getService(vm.Region)
 	if vm.InstanceID == "" {
 		// Probably need to call Provision first.
-		return nil
+		return nil, fmt.Errorf("Instance ID cannot be empty, VM might not be provisioned.")
 	}
 
 	inst, err := svc.DescribeInstances(&ec2.DescribeInstancesInput{
@@ -199,14 +199,14 @@ func (vm *VM) GetIPs() []net.IP {
 		},
 	})
 	if err != nil {
-		return nil
+		return nil, err
 	}
 
 	if len(inst.Reservations) < 1 {
-		return nil
+		return nil, err
 	}
 	if len(inst.Reservations[0].Instances) < 1 {
-		return nil
+		return nil, err
 	}
 
 	ips := make([]net.IP, 2)
@@ -217,7 +217,7 @@ func (vm *VM) GetIPs() []net.IP {
 		ips[PrivateIP] = net.ParseIP(*ip)
 	}
 
-	return ips
+	return ips, nil
 }
 
 // Destroy terminates the VM on AWS. It returns an error if AWS credentials are
@@ -247,8 +247,8 @@ func (vm *VM) Destroy() error {
 // GetSSH returns an SSH client that can be used to connect to a VM. An error
 // is returned if the VM has no IPs.
 func (vm *VM) GetSSH(opts ssh.Options) (ssh.Client, error) {
-	ips := vm.GetIPs()
-	if ips == nil || len(ips) < 1 {
+	ips, err := vm.GetIPs()
+	if ips == nil || len(ips) < 1 || err != nil {
 		return nil, ErrNoIPs
 	}
 
