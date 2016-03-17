@@ -7,16 +7,23 @@ Virtual Machine hosting platforms such as AWS, Azure, OpenStack, vSphere,
 or VirtualBox. Different providers have different utilities and API interfaces
 to achieve that, but the abstractions of their interfaces are quite similar.
 
-Contributors
-=============
+Supported Providers
+====================
+* vSphere > 5.0
+* AWS
+* Openstack (Mirantis)
+* VMware Fusion >= 8.0
+* VMware Workstation >= 8.0
+* Virtualbox >= 4.3.30
+* Azure
+* DigitalOcean
 
-* David Liu
-* Jaime Piña
-* Josh Ellithorpe
-* Kerim Oktay
-* Lirui Li
-* Preet Bhinder
-* Ryan Boehning
+Getting Started
+================
+
+`go get github.com/apcera/libretto/...`
+
+`go build ./...`
 
 Examples
 ==========
@@ -211,14 +218,6 @@ configuring SSH keys.
 Actively used and developed. Can be called natively from Go in a Go application
 instead of shelling out to other tools.
 
-Getting Started
-================
-
-
-`go get github.com/apcera/libretto/...`
-
-`go build ./...`
-
 Known Issues
 =============
 
@@ -238,18 +237,7 @@ Supported Platforms
 
 Other Operating Systems might work but have not been tested.
 
-Supported Providers
-====================
-* vSphere > 5.0
-* AWS
-* Openstack (Mirantis)
-* VMware Fusion >= 8.0
-* VMware Workstation >= 8.0
-* Virtualbox >= 4.3.30
-* Azure
-* DigitalOcean
-
-Writing a new provisioner
+Adding Provisioners
 =========================
 
 Create a new package inside the `virtualmachine` folder and implement the
@@ -263,6 +251,17 @@ Dependencies should be versioned and stored using `Godeps`
 Errors should be lower case so that they can be wrapped by the calling code. If
 possible, types defined in the top level `virtualmachine` package should be
 reused.
+
+Contributors
+=============
+
+* David Liu
+* Jaime Piña
+* Josh Ellithorpe
+* Kerim Oktay
+* Lirui Li
+* Preet Bhinder
+* Ryan Boehning
 
 [License-URL]: https://opensource.org/licenses/Apache-2.0
 [License-Image]: https://img.shields.io/:license-apache-blue.svg
