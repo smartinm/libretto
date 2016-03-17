@@ -1,4 +1,5 @@
-[![License][License-Image]][License-URL] [![ReportCard][ReportCard-Image]][ReportCard-URL] [![Build][Build-Status-Image]][Build-Status-URL]
+[![License][License-Image]][License-URL] [![ReportCard][ReportCard-Image]][ReportCard-URL] [![Build][Build-Status-Image]][Build-Status-URL] [![GoDoc][GoDoc-Image]][GoDoc-URL]
+
 Libretto
 ===============
 
@@ -270,3 +271,5 @@ reused.
 [ReportCard-Image]: http://goreportcard.com/badge/apcera/libretto
 [Build-Status-URL]: http://travis-ci.org/apcera/libretto
 [Build-Status-Image]: https://travis-ci.org/apcera/libretto.svg?branch=master
+[GoDoc-URL]: https://godoc.org/github.com/apcera/libretto
+[GoDoc-Image]: https://godoc.org/github.com/apcera/libretto?status.svg
