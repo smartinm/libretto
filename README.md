@@ -257,12 +257,14 @@ Contributors
 =============
 
 * David Liu
+* Erik Hollensbe
 * Jaime Piña
 * Josh Ellithorpe
 * Kerim Oktay
 * Lirui Li
 * Preet Bhinder
 * Ryan Boehning
+* Shammah Chancellor
 
 [License-URL]: https://opensource.org/licenses/Apache-2.0
 [License-Image]: https://img.shields.io/:license-apache-blue.svg
