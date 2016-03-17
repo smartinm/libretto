@@ -258,6 +258,7 @@ Contributors
 
 * David Liu
 * Erik Hollensbe
+* Gabe Jackson
 * Jaime Piña
 * Josh Ellithorpe
 * Kerim Oktay
