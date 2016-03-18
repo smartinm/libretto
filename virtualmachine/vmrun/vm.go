@@ -124,7 +124,9 @@ func (vm *VM) Halt() error {
 	_, vmxFileName := filepath.Split(src)
 	vm.VmxFilePath = fmt.Sprintf("%s/%s", dst, vmxFileName)
 
-	_, err := runner.RunCombinedError("stop", vm.VmxFilePath, "nogui")
+	// FIXME: Cannot use nogui flag here, it breaks vmrun's getGuestIP
+	// functionality.
+	_, err := runner.RunCombinedError("stop", vm.VmxFilePath)
 	if err != nil {
 		return err
 	}
@@ -140,6 +142,8 @@ func (vm *VM) Suspend() error {
 	_, vmxFileName := filepath.Split(src)
 	vm.VmxFilePath = fmt.Sprintf("%s/%s", dst, vmxFileName)
 
+	// FIXME: Cannot use nogui flag here, it breaks vmrun's getGuestIP
+	// functionality.
 	_, err := runner.RunCombinedError("suspend", vm.VmxFilePath)
 	if err != nil {
 		return err
@@ -161,7 +165,9 @@ func (vm *VM) Start() error {
 	_, vmxFileName := filepath.Split(src)
 	vm.VmxFilePath = fmt.Sprintf("%s/%s", dst, vmxFileName)
 
-	out, err := runner.RunCombinedError("start", vm.VmxFilePath, "nogui")
+	// FIXME: Cannot use nogui flag here, it breaks vmrun's getGuestIP
+	// functionality.
+	out, err := runner.RunCombinedError("start", vm.VmxFilePath)
 	if err != nil {
 		return lvm.WrapErrors(err, errors.New(out))
 	}
@@ -309,8 +315,9 @@ func (vm *VM) configure() error {
 // This function makes a single request to get IPs from a VM.
 func (vm *VM) requestIPs() []net.IP {
 	ips := []net.IP{}
-
-	stdout, _, _ := runner.Run("getGuestIPAddress", vm.VmxFilePath, "nogui", "wait")
+	// FIXME: Cannot use nogui flag here, it breaks vmrun's getGuestIP
+	// functionality.
+	stdout, _, _ := runner.Run("getGuestIPAddress", vm.VmxFilePath, "wait")
 	if stdout != "" {
 		if ip := net.ParseIP(strings.TrimSpace(stdout)); ip != nil {
 			ips = append(ips, ip)
