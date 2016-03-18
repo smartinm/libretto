@@ -10,6 +10,7 @@ import (
 
 	"github.com/apcera/libretto/Godeps/_workspace/src/github.com/Azure/azure-sdk-for-go/management/virtualmachine"
 	"github.com/apcera/libretto/Godeps/_workspace/src/github.com/Azure/azure-sdk-for-go/management/vmutils"
+	"github.com/apcera/libretto/util"
 
 	"github.com/apcera/libretto/ssh"
 	lvm "github.com/apcera/libretto/virtualmachine"
@@ -176,23 +177,19 @@ func (vm *VM) GetIPs() ([]net.IP, error) {
 
 // GetSSH returns an SSH client that can be used to connect to the VM. An error
 // is returned if the VM has no IPs.
-func (vm *VM) GetSSH(opts ssh.Options) (ssh.Client, error) {
-	ips, err := vm.GetIPs()
+func (vm *VM) GetSSH(options ssh.Options) (ssh.Client, error) {
+	ips, err := util.GetVMIPs(vm, options)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to get ips: %s", err)
-	}
-	if ips == nil || len(ips) < 1 {
-		return nil, lvm.ErrVMNoIP
+		return nil, err
 	}
 
-	cli := ssh.SSHClient{
+	client := ssh.SSHClient{
 		Creds:   &vm.SSHCreds,
 		IP:      ips[PublicIP],
-		Options: opts,
+		Options: options,
 		Port:    22,
 	}
-
-	return &cli, nil
+	return &client, nil
 }
 
 // GetState returns the status of the Azure VM. The status will be one of the

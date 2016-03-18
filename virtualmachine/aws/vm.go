@@ -13,6 +13,7 @@ import (
 	"github.com/apcera/libretto/Godeps/_workspace/src/github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/apcera/libretto/Godeps/_workspace/src/github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/apcera/libretto/ssh"
+	"github.com/apcera/libretto/util"
 	"github.com/apcera/libretto/virtualmachine"
 )
 
@@ -246,24 +247,22 @@ func (vm *VM) Destroy() error {
 
 // GetSSH returns an SSH client that can be used to connect to a VM. An error
 // is returned if the VM has no IPs.
-func (vm *VM) GetSSH(opts ssh.Options) (ssh.Client, error) {
-	ips, err := vm.GetIPs()
-	if ips == nil || len(ips) < 1 || err != nil {
-		return nil, ErrNoIPs
-	}
-
-	cli := &ssh.SSHClient{
-		Creds:   &vm.SSHCreds,
-		IP:      ips[PublicIP],
-		Options: opts,
-		Port:    22,
-	}
-
-	if err := cli.WaitForSSH(SSHTimeout); err != nil {
+func (vm *VM) GetSSH(options ssh.Options) (ssh.Client, error) {
+	ips, err := util.GetVMIPs(vm, options)
+	if err != nil {
 		return nil, err
 	}
 
-	return cli, nil
+	client := &ssh.SSHClient{
+		Creds:   &vm.SSHCreds,
+		IP:      ips[PublicIP],
+		Options: options,
+		Port:    22,
+	}
+	if err := client.WaitForSSH(SSHTimeout); err != nil {
+		return nil, err
+	}
+	return client, nil
 }
 
 // GetState returns the state of the VM, such as "running". An error is
