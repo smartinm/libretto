@@ -1,7 +1,7 @@
 [![License][License-Image]][License-URL] [![ReportCard][ReportCard-Image]][ReportCard-URL] [![Build][Build-Status-Image]][Build-Status-URL] [![GoDoc][GoDoc-Image]][GoDoc-URL]
 
 Libretto
-===============
+=========
 
 Libretto is a Golang library to create Virtual Machines (VM) on any cloud and
 Virtual Machine hosting platforms such as AWS, Azure, OpenStack, vSphere,
@@ -27,7 +27,7 @@ Getting Started
 `go build ./...`
 
 Examples
-==========
+=========
 
 AWS
 ----
@@ -92,7 +92,7 @@ if err := vm.Provision(); err != nil {
 ```
 
 Digital Ocean
--------------
+--------------
 
 ``` go
 token := os.Getenv("DIGITALOCEAN_API_KEY")
@@ -117,7 +117,7 @@ if err := vm.Provision(); err != nil {
 ```
 
 Virtualbox
--------------
+-----------
 
 ``` go
 
@@ -138,7 +138,7 @@ if err := vm.Provision(); err != nil {
 ```
 
 VMware Fusion/Workstation (vmrun)
----------------------------------
+----------------------------------
 
 ``` go
 var config vmrun.Config
@@ -159,7 +159,7 @@ if err := vm.Provision(); err != nil {
 ```
 
 Openstack
----------
+----------
 
 ``` go
 
@@ -196,7 +196,7 @@ Openstack
  ```
 
 FAQ
-===
+====
 
 * Why write Libretto?
 
@@ -239,7 +239,7 @@ Supported Platforms
 Other Operating Systems might work but have not been tested.
 
 Adding Provisioners
-=========================
+====================
 
 Create a new package inside the `virtualmachine` folder and implement the
 Libretto `VirtualMachine` interface. The provider should work at the minimum on
@@ -256,16 +256,7 @@ reused.
 Contributors
 =============
 
-* David Liu
-* Erik Hollensbe
-* Gabe Jackson
-* Jaime Piña
-* Josh Ellithorpe
-* Kerim Oktay
-* Lirui Li
-* Preet Bhinder
-* Ryan Boehning
-* Shammah Chancellor
+https://github.com/apcera/libretto/graphs/contributors
 
 [License-URL]: https://opensource.org/licenses/Apache-2.0
 [License-Image]: https://img.shields.io/:license-apache-blue.svg
