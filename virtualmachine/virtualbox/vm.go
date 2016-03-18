@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/apcera/libretto/Godeps/_workspace/src/github.com/apcera/util/uuid"
+	"github.com/apcera/libretto/util"
 
 	libssh "github.com/apcera/libretto/ssh"
 	lvm "github.com/apcera/libretto/virtualmachine"
@@ -90,19 +91,15 @@ func (vm *VM) GetName() string {
 	return vm.Name
 }
 
-// GetSSH returns an ssh client for the the vm.
+// GetSSH returns an ssh client for the the VM.
 func (vm *VM) GetSSH(options libssh.Options) (libssh.Client, error) {
-	if len(vm.ips) == 0 {
-		ips, err := vm.GetIPs()
-		if err != nil {
-			return nil, fmt.Errorf("Error getting IPs for the VM: %s", err)
-		}
-		if len(ips) == 0 {
-			return &libssh.SSHClient{}, lvm.ErrVMNoIP
-		}
-		vm.ips = ips
+	ips, err := util.GetVMIPs(vm, options)
+	if err != nil {
+		return nil, err
 	}
-	client := libssh.SSHClient{Creds: &vm.Credentials, IP: vm.ips[0], Port: 22, Options: options}
+	vm.ips = ips
+
+	client := libssh.SSHClient{Creds: &vm.Credentials, IP: ips[0], Port: 22, Options: options}
 	return &client, nil
 }
 

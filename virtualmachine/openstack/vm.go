@@ -15,6 +15,7 @@ import (
 	"github.com/apcera/libretto/Godeps/_workspace/src/github.com/rackspace/gophercloud/openstack/compute/v2/servers"
 	"github.com/apcera/libretto/Godeps/_workspace/src/github.com/rackspace/gophercloud/openstack/networking/v2/networks"
 	"github.com/apcera/libretto/ssh"
+	"github.com/apcera/libretto/util"
 	lvm "github.com/apcera/libretto/virtualmachine"
 )
 
@@ -382,12 +383,9 @@ func (vm *VM) Destroy() error {
 // GetSSH returns an SSH client that can be used to connect to a VM. An error is
 // returned if the VM has no IPs.
 func (vm *VM) GetSSH(options ssh.Options) (ssh.Client, error) {
-	ips, err := vm.GetIPs()
+	ips, err := util.GetVMIPs(vm, options)
 	if err != nil {
-		return nil, fmt.Errorf("Error getting IPs for the VM: %s", err)
-	}
-	if ips == nil || len(ips) < 1 {
-		return nil, lvm.ErrVMNoIP
+		return nil, err
 	}
 
 	client := ssh.SSHClient{Creds: &vm.Credentials, IP: ips[PublicIP], Port: 22, Options: options}

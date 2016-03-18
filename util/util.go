@@ -3,8 +3,13 @@
 package util
 
 import (
+	"fmt"
 	"math/rand"
+	"net"
 	"time"
+
+	"github.com/apcera/libretto/ssh"
+	lvm "github.com/apcera/libretto/virtualmachine"
 )
 
 // Random generates a random number in between min and max
@@ -19,4 +24,23 @@ func Random(min, max int) int {
 	}
 	rand.Seed(time.Now().UTC().UnixNano())
 	return rand.Intn(max-min+1) + min
+}
+
+// GetVMIPs returns the IPs associated with the given VM. If the IPs are present
+// in options, they will be returned. Otherwise, an API call will be made to
+// get the list of IPs. An error is returned if the API call fails or returns
+// nothing.
+func GetVMIPs(vm lvm.VirtualMachine, options ssh.Options) ([]net.IP, error) {
+	ips := options.IPs
+	if len(ips) == 0 {
+		var err error
+		ips, err = vm.GetIPs()
+		if err != nil {
+			return nil, fmt.Errorf("Error getting IPs for the VM: %s", err)
+		}
+		if len(ips) == 0 {
+			return nil, lvm.ErrVMNoIP
+		}
+	}
+	return ips, nil
 }
