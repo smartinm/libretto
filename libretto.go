@@ -6,3 +6,5 @@
 // interfaces to achieve that, but the abstractions of their interfaces are
 // quite similar. See the README.md file for help getting started.
 package libretto
+
+const Version = "0.9.0"
