@@ -1,4 +1,4 @@
-[![License][License-Image]][License-URL] [![ReportCard][ReportCard-Image]][ReportCard-URL] [![Build][Build-Status-Image]][Build-Status-URL] [![GoDoc][GoDoc-Image]][GoDoc-URL]
+[![License][License-Image]][License-URL] [![ReportCard][ReportCard-Image]][ReportCard-URL] [![Build][Build-Status-Image]][Build-Status-URL] [![GoDoc][GoDoc-Image]][GoDoc-URL] [![Release][Release-Image]][Release-URL]
 
 Libretto
 =========
@@ -266,3 +266,5 @@ https://github.com/apcera/libretto/graphs/contributors
 [Build-Status-Image]: https://travis-ci.org/apcera/libretto.svg?branch=master
 [GoDoc-URL]: https://godoc.org/github.com/apcera/libretto
 [GoDoc-Image]: https://godoc.org/github.com/apcera/libretto?status.svg
+[Release-URL]: https://github.com/apcera/libretto/releases/tag/v0.9.0
+[Release-Image]: https://img.shields.io/badge/release-v0.9.0-1eb0fc.svg
