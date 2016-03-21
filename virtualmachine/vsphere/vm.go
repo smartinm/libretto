@@ -446,6 +446,12 @@ func (vm *VM) GetIPs() ([]net.IP, error) {
 			ips = append(ips, netIP)
 		}
 	}
+	if ips == nil && vmMo.Guest.IpAddress != "" {
+		ip := net.ParseIP(vmMo.Guest.IpAddress)
+		if ip != nil {
+			ips = append(ips, ip)
+		}
+	}
 	return ips, nil
 }
 
