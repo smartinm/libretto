@@ -17,12 +17,13 @@ import (
 	"github.com/apcera/libretto/Godeps/_workspace/src/github.com/vmware/govmomi/find"
 	"github.com/apcera/libretto/Godeps/_workspace/src/github.com/vmware/govmomi/object"
 	"github.com/apcera/libretto/Godeps/_workspace/src/github.com/vmware/govmomi/property"
+	"github.com/apcera/libretto/Godeps/_workspace/src/github.com/vmware/govmomi/vim25/mo"
 	"github.com/apcera/libretto/Godeps/_workspace/src/github.com/vmware/govmomi/vim25/types"
+	"github.com/apcera/libretto/Godeps/_workspace/src/golang.org/x/net/context"
+
 	"github.com/apcera/libretto/ssh"
 	"github.com/apcera/libretto/util"
 	lvm "github.com/apcera/libretto/virtualmachine"
-
-	"github.com/apcera/libretto/Godeps/_workspace/src/golang.org/x/net/context"
 )
 
 type vmwareFinder struct {
@@ -344,6 +345,9 @@ type VM struct {
 	finder    finder
 	collector collector
 	datastore string
+	vmCache   map[string]*mo.VirtualMachine
+
+	mutex sync.Mutex
 }
 
 // Provision provisions this VM.

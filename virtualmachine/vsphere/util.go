@@ -74,6 +74,10 @@ var setupSession = func(vm *VM) error {
 	vm.client = client
 	vm.finder = newFinder(vm.client.Client)
 	vm.collector = newCollector(vm.client.Client)
+	// Create a cache for located objects. Just vms for now
+	vm.mutex.Lock()
+	defer vm.mutex.Unlock()
+	vm.vmCache = make(map[string]*mo.VirtualMachine)
 	return nil
 }
 
@@ -284,6 +288,13 @@ var findVM = func(vm *VM, dc *mo.Datacenter, name string) (*mo.VirtualMachine, e
 }
 
 func searchTree(vm *VM, mor types.ManagedObjectReference, name string) (*mo.VirtualMachine, error) {
+	vm.mutex.Lock()
+	defer vm.mutex.Unlock()
+	// See if the VM was previously found
+	cached, yes := vm.vmCache[name]
+	if yes {
+		return cached, nil
+	}
 	switch mor.Type {
 	case "Folder":
 		// Fetch the childEntity property of the folder and check them
@@ -311,6 +322,7 @@ func searchTree(vm *VM, mor types.ManagedObjectReference, name string) (*mo.Virt
 			return nil, NewErrorObjectNotFound(errors.New("could not find the vm"), name)
 		}
 		if vmMo.Name == name {
+			vm.vmCache[name] = &vmMo
 			return &vmMo, nil
 		}
 		return nil, NewErrorObjectNotFound(errors.New("could not find the vm"), name)
