@@ -29,8 +29,8 @@ import (
 	lvm "github.com/apcera/libretto/virtualmachine"
 )
 
-// Checks if the VM already exists
-var exists = func(vm *VM, dc *mo.Datacenter, tName string) (bool, error) {
+// Exists checks if the VM already exists.
+var Exists = func(vm *VM, dc *mo.Datacenter, tName string) (bool, error) {
 	_, err := findVM(vm, dc, tName)
 	if err != nil {
 		if _, ok := err.(ErrorObjectNotFound); ok {
@@ -57,7 +57,7 @@ var newCollector = func(c *vim25.Client) *property.Collector {
 	return property.DefaultCollector(c)
 }
 
-var setupSession = func(vm *VM) error {
+var SetupSession = func(vm *VM) error {
 	uri := getURI(vm.Host)
 	u, err := url.Parse(uri)
 	if err != nil || u.String() == "" {
@@ -77,8 +77,9 @@ var setupSession = func(vm *VM) error {
 	return nil
 }
 
-// getDatacenter retrieves the datacenter that the provisioner was configured against.
-func getDatacenter(vm *VM) (*mo.Datacenter, error) {
+// GetDatacenter retrieves the datacenter that the provisioner was configured
+// against.
+func GetDatacenter(vm *VM) (*mo.Datacenter, error) {
 	dcList, err := vm.finder.DatacenterList(vm.ctx, "*")
 	if err != nil {
 		return nil, NewErrorObjectNotFound(err, vm.Datacenter)
@@ -420,7 +421,7 @@ var waitForIP = func(vm *VM, vmMo *mo.VirtualMachine) error {
 
 var halt = func(vm *VM) error {
 	// Get a reference to the datacenter with host and vm folders populated
-	dcMo, err := getDatacenter(vm)
+	dcMo, err := GetDatacenter(vm)
 	if err != nil {
 		return err
 	}
@@ -445,7 +446,7 @@ var halt = func(vm *VM) error {
 
 var start = func(vm *VM) error {
 	// Get a reference to the datacenter with host and vm folders populated
-	dcMo, err := getDatacenter(vm)
+	dcMo, err := GetDatacenter(vm)
 	if err != nil {
 		return err
 	}
@@ -710,7 +711,7 @@ func validateHost(vm *VM, hsMor types.ManagedObjectReference) (bool, error) {
 
 func getState(vm *VM) (state string, err error) {
 	// Get a reference to the datacenter with host and vm folders populated
-	dcMo, err := getDatacenter(vm)
+	dcMo, err := GetDatacenter(vm)
 	if err != nil {
 		return "", lvm.ErrVMInfoFailed
 	}
