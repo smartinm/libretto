@@ -38,6 +38,10 @@ ethernet{{.Idx}}.present = "TRUE"
 ethernet{{.Idx}}.virtualdev = "vmxnet3"
 `
 
+const vmrunTimeout = 30 * time.Second
+
+var errVmrunTimeout = errors.New("Timed out waiting for vmrun")
+
 // Regular expression to parse the VMX file
 var ethernetRegexp = regexp.MustCompile(`ethernet.*\n`)
 
@@ -66,6 +70,56 @@ type Runner interface {
 
 // vmrunRunner implements the Runner interface.
 type vmrunRunner struct {
+}
+
+// Run runs a vmrun command.
+func (f vmrunRunner) Run(args ...string) (string, string, error) {
+	var vmrunPath string
+
+	// If vmrun is not found in the system path, fall back to the
+	// hard coded path (VMRunPath).
+	path, err := exec.LookPath("vmrun")
+	if err == nil {
+		vmrunPath = path
+	} else {
+		vmrunPath = VMRunPath
+	}
+
+	cmd := exec.Command(vmrunPath, args...)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	cmd.Stdout, cmd.Stderr = &stdout, &stderr
+
+	err = cmd.Start()
+	timer := time.AfterFunc(vmrunTimeout, func() {
+		cmd.Process.Kill()
+		err = errVmrunTimeout
+	})
+	e := cmd.Wait()
+	timer.Stop()
+
+	if err != nil || e != nil {
+		err = lvm.WrapErrors(err, e)
+	}
+	return stdout.String(), stderr.String(), err
+}
+
+// RunCombinedError runs a vmrun command.  The output is stdout and the the
+// combined err/stderr from the command.
+func (f vmrunRunner) RunCombinedError(args ...string) (string, error) {
+	wout, werr, err := f.Run(args...)
+	if err != nil {
+		if werr != "" {
+			return wout, fmt.Errorf("%s: %s", err, werr)
+		}
+		return wout, err
+	}
+
+	return wout, nil
 }
 
 // VM represents a single VMware VM and all the operations for provisioning that type
@@ -100,19 +154,17 @@ func (vm *VM) GetSSH(options libssh.Options) (libssh.Client, error) {
 
 // Destroy powers off the VM and deletes its files from disk.
 func (vm *VM) Destroy() (err error) {
-	defer func() {
-		if vm.Dst != "" {
-			err = os.RemoveAll(vm.Dst)
-			if err != nil {
-				err = lvm.ErrDeletingVM
-				return
-			}
-		}
-		err = nil
-		return
-	}()
-
 	err = vm.Halt()
+	if err != nil {
+		return err
+	}
+	if vm.Dst != "" {
+		err = os.RemoveAll(vm.Dst)
+		if err != nil {
+			err = lvm.ErrDeletingVM
+			return
+		}
+	}
 	return
 }
 
@@ -127,6 +179,12 @@ func (vm *VM) Halt() error {
 	// FIXME: Cannot use nogui flag here, it breaks vmrun's getGuestIP
 	// functionality.
 	_, err := runner.RunCombinedError("stop", vm.VmxFilePath)
+	if err != nil {
+		if err == errVmrunTimeout {
+			_, err = runner.RunCombinedError("stop", vm.VmxFilePath, "hard")
+		}
+	}
+
 	if err != nil {
 		return err
 	}
@@ -399,44 +457,4 @@ OuterLoop:
 	wg.Wait()
 
 	return r
-}
-
-// Run runs a vmrun command.
-func (f vmrunRunner) Run(args ...string) (string, string, error) {
-	var vmrunPath string
-
-	// If vmrun is not found in the system path, fall back to the
-	// hard coded path (VMRunPath).
-	path, err := exec.LookPath("vmrun")
-	if err == nil {
-		vmrunPath = path
-	} else {
-		vmrunPath = VMRunPath
-	}
-
-	cmd := exec.Command(vmrunPath, args...)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
-
-	cmd.Stdout, cmd.Stderr = &stdout, &stderr
-
-	err = cmd.Run()
-	return stdout.String(), stderr.String(), err
-}
-
-// RunCombinedError runs a vmrun command.  The output is stdout and the the
-// combined err/stderr from the command.
-func (f vmrunRunner) RunCombinedError(args ...string) (string, error) {
-	wout, werr, err := f.Run(args...)
-	if err != nil {
-		if werr != "" {
-			return wout, fmt.Errorf("%s: %s", err, werr)
-		}
-		return wout, err
-	}
-
-	return wout, nil
 }
