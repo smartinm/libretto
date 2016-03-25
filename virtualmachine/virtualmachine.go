@@ -98,7 +98,9 @@ var (
 func WrapErrors(errs ...error) error {
 	s := []string{}
 	for _, e := range errs {
-		s = append(s, e.Error())
+		if e != nil {
+			s = append(s, e.Error())
+		}
 	}
 	return errors.New(strings.Join(s, ": "))
 }
