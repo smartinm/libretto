@@ -40,7 +40,8 @@ ethernet{{.Idx}}.virtualdev = "vmxnet3"
 
 const vmrunTimeout = 30 * time.Second
 
-var errVmrunTimeout = errors.New("Timed out waiting for vmrun")
+// ErrVmrunTimeout is returned when vmrun doesn't finish executing in `vmrunTimeout` seconds.
+var ErrVmrunTimeout = errors.New("Timed out waiting for vmrun")
 
 // Regular expression to parse the VMX file
 var ethernetRegexp = regexp.MustCompile(`ethernet.*\n`)
@@ -97,7 +98,7 @@ func (f vmrunRunner) Run(args ...string) (string, string, error) {
 	err = cmd.Start()
 	timer := time.AfterFunc(vmrunTimeout, func() {
 		cmd.Process.Kill()
-		err = errVmrunTimeout
+		err = ErrVmrunTimeout
 	})
 	e := cmd.Wait()
 	timer.Stop()
@@ -180,7 +181,7 @@ func (vm *VM) Halt() error {
 	// functionality.
 	_, err := runner.RunCombinedError("stop", vm.VmxFilePath)
 	if err != nil {
-		if err == errVmrunTimeout {
+		if err == ErrVmrunTimeout {
 			_, err = runner.RunCombinedError("stop", vm.VmxFilePath, "hard")
 		}
 	}
