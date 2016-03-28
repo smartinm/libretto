@@ -155,7 +155,7 @@ func (vm *VM) GetSSH(options libssh.Options) (libssh.Client, error) {
 
 // Destroy powers off the VM and deletes its files from disk.
 func (vm *VM) Destroy() (err error) {
-	err = vm.Halt()
+	err = vm.haltWithFlag(true)
 	if err != nil {
 		return err
 	}
@@ -169,8 +169,7 @@ func (vm *VM) Destroy() (err error) {
 	return
 }
 
-// Halt powers off the VM without destroying it
-func (vm *VM) Halt() error {
+func (vm *VM) haltWithFlag(hard bool) error {
 	src := vm.Src
 	dst := vm.Dst
 
@@ -179,18 +178,23 @@ func (vm *VM) Halt() error {
 
 	// FIXME: Cannot use nogui flag here, it breaks vmrun's getGuestIP
 	// functionality.
-	_, err := runner.RunCombinedError("stop", vm.VmxFilePath)
-	if err != nil {
-		if err == ErrVmrunTimeout {
-			_, err = runner.RunCombinedError("stop", vm.VmxFilePath, "hard")
-		}
+	flag := "soft"
+	if (hard) {
+		flag = "hard"
 	}
+		
+	_, err := runner.RunCombinedError("stop", vm.VmxFilePath, flag)
 
 	if err != nil {
 		return err
 	}
 
 	return nil
+}
+
+// Halt powers off the VM without destroying it
+func (vm *VM) Halt() error {
+	return vm.haltWithFlag(false)
 }
 
 // Suspend suspends the active state of the VM.
