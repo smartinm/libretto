@@ -55,16 +55,16 @@ const (
 
 	// ActionTimeout is the maximum seconds to wait before failing to
 	// any action on VM, such as Provision, Halt or Destroy.
-	ActionTimeout = 300
+	ActionTimeout = 900
 	// ImageUploadTimeout is the maximum seconds to wait before failing to
 	// upload an image.
-	ImageUploadTimeout = 300
+	ImageUploadTimeout = 900
 	// VolumeActionTimeout is the maximum seconds to wait before failing to
 	// do an action (create, delete) on the volume.
-	VolumeActionTimeout = 300
+	VolumeActionTimeout = 900
 	// SSHTimeout is the maximum seconds to wait before failing to
 	// GetSSH.
-	SSHTimeout = 300
+	SSHTimeout = 900
 
 	// StateActive is the state Openstack reports when the VM is started.
 	StateActive = "ACTIVE"
