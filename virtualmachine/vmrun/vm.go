@@ -38,7 +38,7 @@ ethernet{{.Idx}}.present = "TRUE"
 ethernet{{.Idx}}.virtualdev = "vmxnet3"
 `
 
-const vmrunTimeout = 30 * time.Second
+const vmrunTimeout = 90 * time.Second
 
 // ErrVmrunTimeout is returned when vmrun doesn't finish executing in `vmrunTimeout` seconds.
 var ErrVmrunTimeout = errors.New("Timed out waiting for vmrun")
