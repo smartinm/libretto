@@ -119,7 +119,7 @@ func (vm *VM) SetTag(key, value string) error {
 
 	volIDs, err := getInstanceVolumeIDs(svc, vm.InstanceID)
 	if err != nil {
-		return err
+		return fmt.Errorf("Failed to get instance's volumes IDs: %s", err)
 	}
 
 	ids := make([]*string, 0, len(volIDs)+1)
@@ -168,13 +168,13 @@ func (vm *VM) Provision() error {
 		InstanceIds: instID,
 	})
 	if err != nil {
-		return err
+		return fmt.Errorf("Failed to wait for instance to exist: %s", err)
 	}
 	err = svc.WaitUntilInstanceRunning(&ec2.DescribeInstancesInput{
 		InstanceIds: instID,
 	})
 	if err != nil {
-		return err
+		return fmt.Errorf("Failed to wait for instance to run: %s", err)
 	}
 
 	if vm.DeleteNonRootVolumeOnDestroy {
@@ -191,7 +191,7 @@ func (vm *VM) GetIPs() ([]net.IP, error) {
 	svc := getService(vm.Region)
 	if vm.InstanceID == "" {
 		// Probably need to call Provision first.
-		return nil, fmt.Errorf("Instance ID cannot be empty, VM might not be provisioned.")
+		return nil, ErrNoInstanceID
 	}
 
 	inst, err := svc.DescribeInstances(&ec2.DescribeInstancesInput{
@@ -200,14 +200,14 @@ func (vm *VM) GetIPs() ([]net.IP, error) {
 		},
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Failed to describe instance: %s", err)
 	}
 
 	if len(inst.Reservations) < 1 {
-		return nil, err
+		return nil, errors.New("Missing instance reservation")
 	}
 	if len(inst.Reservations[0].Instances) < 1 {
-		return nil, err
+		return nil, ErrNoInstance
 	}
 
 	ips := make([]net.IP, 2)
@@ -282,7 +282,7 @@ func (vm *VM) GetState() (string, error) {
 		},
 	})
 	if err != nil {
-		return "", fmt.Errorf("Failed to get VM status: %v", err)
+		return "", fmt.Errorf("Failed to describe instance: %s", err)
 	}
 
 	if n := len(stat.Reservations); n < 1 {
@@ -393,7 +393,7 @@ func (vm *VM) DeleteKeyPair() error {
 		DryRun:  aws.Bool(false),
 	})
 	if err != nil {
-		return err
+		return fmt.Errorf("Failed to delete key pair: %s", err)
 	}
 
 	vm.SSHCreds.SSHPrivateKey = ""
