@@ -106,11 +106,7 @@ func (vm *VM) deleteHostedService() error {
 
 	// Delete hosted service
 	_, err = sc.DeleteHostedService(vm.ServiceName, true)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 // listHostedServices lists all the hosted services under the current account.
@@ -136,11 +132,7 @@ func (vm *VM) addAddCertificate() error {
 	}
 
 	_, err = sc.AddCertificate(vm.Name, vm.Cert.Data, hostedservice.CertificateFormat(vm.Cert.Format), vm.SSHCreds.SSHPassword)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 // serviceExist checks if the desired service name already exists.

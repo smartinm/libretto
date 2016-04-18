@@ -179,17 +179,12 @@ func (vm *VM) haltWithFlag(hard bool) error {
 	// FIXME: Cannot use nogui flag here, it breaks vmrun's getGuestIP
 	// functionality.
 	flag := "soft"
-	if (hard) {
+	if hard {
 		flag = "hard"
 	}
-		
+
 	_, err := runner.RunCombinedError("stop", vm.VmxFilePath, flag)
-
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 // Halt powers off the VM without destroying it
@@ -208,11 +203,7 @@ func (vm *VM) Suspend() error {
 	// FIXME: Cannot use nogui flag here, it breaks vmrun's getGuestIP
 	// functionality.
 	_, err := runner.RunCombinedError("suspend", vm.VmxFilePath)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 // Resume suspends the active state of the VM.
@@ -367,12 +358,7 @@ func (vm *VM) configure() error {
 		newVmxString += b.String()
 	}
 
-	err = ioutil.WriteFile(vm.VmxFilePath, []byte(newVmxString), 0755)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return ioutil.WriteFile(vm.VmxFilePath, []byte(newVmxString), 0755)
 }
 
 // This function makes a single request to get IPs from a VM.

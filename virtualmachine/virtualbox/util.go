@@ -231,10 +231,7 @@ func DeleteNIC(vm VM, nic NIC) error {
 		return lvm.ErrNICAlreadyDisabled
 	}
 	_, _, err := runner.Run("modifyvm", vm.Name, fmt.Sprintf("--nic%d", nic.Idx), "null")
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
 func getStringFromBacking(backing Backing) string {
