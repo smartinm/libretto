@@ -112,7 +112,7 @@ config := digitalocean.Config{
 }
 
 vm := digitalocean.VM{
-    ApiToken: token,
+    APIToken: token,
     Config:   config,
 }
 
