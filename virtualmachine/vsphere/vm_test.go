@@ -115,7 +115,7 @@ func TestSetupSessionBadURI(t *testing.T) {
 		return ""
 	}
 	vm := VM{}
-	err := setupSession(&vm)
+	err := SetupSession(&vm)
 	if _, ok := err.(ErrorParsingURL); !ok {
 		t.Fatalf("Expected an error while parsing an invalid URI, got: %s", err)
 	}
@@ -134,7 +134,7 @@ func TestSetupSessionClientError(t *testing.T) {
 	newClient = func(vm *VM) (*govmomi.Client, error) {
 		return nil, fmt.Errorf("error")
 	}
-	err := setupSession(&vm)
+	err := SetupSession(&vm)
 	if _, ok := err.(ErrorClientFailed); !ok {
 		t.Fatalf("Expected an error while connecting to the VI SDK, got: %s", err)
 	}
@@ -164,7 +164,7 @@ func TestSetupSessionHappyPath(t *testing.T) {
 		return &property.Collector{}
 	}
 
-	err := setupSession(&vm)
+	err := SetupSession(&vm)
 	if err != nil {
 		t.Fatalf("Unexpected error setting up the VI SDK, got: %s", err)
 	}
@@ -193,7 +193,7 @@ func TestGetDatacenterNoDatacenters(t *testing.T) {
 		finder:     mockFinder{},
 		Datacenter: "test-dc",
 	}
-	_, err := getDatacenter(vm)
+	_, err := GetDatacenter(vm)
 	if _, ok := err.(ErrorObjectNotFound); !ok {
 		t.Fatalf("Expected to get an ErrorObjectNotFound got: %s", err)
 	}
@@ -211,7 +211,7 @@ func TestGetDatacenterFinderError(t *testing.T) {
 		finder:     f,
 		Datacenter: "test-dc",
 	}
-	_, err := getDatacenter(vm)
+	_, err := GetDatacenter(vm)
 	if _, ok := err.(ErrorObjectNotFound); !ok {
 		t.Fatalf("Expected to get an ErrorObjectNotFound got: %s", err)
 	}
@@ -234,7 +234,7 @@ func TestGetDatacenterPropertyError(t *testing.T) {
 		Datacenter: "test-dc",
 		collector:  c,
 	}
-	_, err := getDatacenter(vm)
+	_, err := GetDatacenter(vm)
 	if _, ok := err.(ErrorPropertyRetrieval); !ok {
 		t.Fatalf("Expected to get a property retrieval error, got: %s", err)
 	}
@@ -259,7 +259,7 @@ func TestGetDatacenterHappyPath(t *testing.T) {
 		Datacenter: "test-dc",
 		collector:  c,
 	}
-	dc, err := getDatacenter(vm)
+	dc, err := GetDatacenter(vm)
 	if err != nil {
 		t.Fatalf("Expected to get no errors, got: %s", err)
 	}

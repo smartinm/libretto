@@ -348,7 +348,7 @@ type VM struct {
 
 // Provision provisions this VM.
 func (vm *VM) Provision() (err error) {
-	if err := setupSession(vm); err != nil {
+	if err := SetupSession(vm); err != nil {
 		return fmt.Errorf("Error setting up vSphere session: %s", err)
 	}
 
@@ -356,7 +356,7 @@ func (vm *VM) Provision() (err error) {
 	defer vm.cancel()
 
 	// Get a reference to the datacenter with host and vm folders populated
-	dcMo, err := getDatacenter(vm)
+	dcMo, err := GetDatacenter(vm)
 	if err != nil {
 		return fmt.Errorf("Failed to retrieve datacenter: %s", err)
 	}
@@ -373,7 +373,7 @@ func (vm *VM) Provision() (err error) {
 	for _, d := range datastores {
 		template := createTemplateName(vm.Template, d)
 		// Does the VM template already exist?
-		e, err := exists(vm, dcMo, template)
+		e, err := Exists(vm, dcMo, template)
 		if err != nil {
 			return fmt.Errorf("failed to check if the template already exists: %s", err)
 		}
@@ -395,7 +395,7 @@ func (vm *VM) Provision() (err error) {
 	}
 
 	// Does the VM already exist?
-	e, err := exists(vm, dcMo, vm.Name)
+	e, err := Exists(vm, dcMo, vm.Name)
 	if err != nil {
 		return fmt.Errorf("failed to check if the vm already exists: %s", err)
 	}
@@ -418,13 +418,13 @@ func (vm *VM) GetName() string {
 // GetIPs returns the IPs of this VM. Returns all the IPs known to the API for
 // the different network cards for this VM. Includes IPV4 and IPV6 addresses.
 func (vm *VM) GetIPs() ([]net.IP, error) {
-	if err := setupSession(vm); err != nil {
+	if err := SetupSession(vm); err != nil {
 		return nil, err
 	}
 	defer vm.cancel()
 
 	// Get a reference to the datacenter with host and vm folders populated
-	dcMo, err := getDatacenter(vm)
+	dcMo, err := GetDatacenter(vm)
 	if err != nil {
 		return nil, err
 	}
@@ -457,7 +457,7 @@ func (vm *VM) GetIPs() ([]net.IP, error) {
 
 // Destroy deletes this VM from vSphere.
 func (vm *VM) Destroy() (err error) {
-	if err := setupSession(vm); err != nil {
+	if err := SetupSession(vm); err != nil {
 		return err
 	}
 	defer vm.cancel()
@@ -520,7 +520,7 @@ func (vm *VM) Destroy() (err error) {
 	}
 
 	// Get a reference to the datacenter with host and vm folders populated
-	dcMo, err := getDatacenter(vm)
+	dcMo, err := GetDatacenter(vm)
 	if err != nil {
 		return err
 	}
@@ -545,7 +545,7 @@ func (vm *VM) Destroy() (err error) {
 
 // GetState returns the power state of this VM.
 func (vm *VM) GetState() (state string, err error) {
-	if err := setupSession(vm); err != nil {
+	if err := SetupSession(vm); err != nil {
 		return "", lvm.ErrVMInfoFailed
 	}
 	defer vm.cancel()
@@ -568,13 +568,13 @@ func (vm *VM) GetState() (state string, err error) {
 
 // Suspend suspends this VM.
 func (vm *VM) Suspend() (err error) {
-	if err := setupSession(vm); err != nil {
+	if err := SetupSession(vm); err != nil {
 		return err
 	}
 	defer vm.cancel()
 
 	// Get a reference to the datacenter with host and vm folders populated
-	dcMo, err := getDatacenter(vm)
+	dcMo, err := GetDatacenter(vm)
 	if err != nil {
 		return err
 	}
@@ -599,7 +599,7 @@ func (vm *VM) Suspend() (err error) {
 
 // Halt halts this VM.
 func (vm *VM) Halt() (err error) {
-	if err := setupSession(vm); err != nil {
+	if err := SetupSession(vm); err != nil {
 		return err
 	}
 	defer vm.cancel()
@@ -608,7 +608,7 @@ func (vm *VM) Halt() (err error) {
 
 // Start powers on this VM.
 func (vm *VM) Start() (err error) {
-	if err := setupSession(vm); err != nil {
+	if err := SetupSession(vm); err != nil {
 		return err
 	}
 	defer vm.cancel()
