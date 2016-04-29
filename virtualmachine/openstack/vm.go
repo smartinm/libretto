@@ -445,12 +445,7 @@ func (vm *VM) Halt() error {
 	}
 
 	// Wait until VM halts
-	err = waitUntil(vm, lvm.VMHalted)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return waitUntil(vm, lvm.VMHalted)
 }
 
 // Start boots a stopped VM.
@@ -482,12 +477,7 @@ func (vm *VM) Start() error {
 	}
 
 	// Wait until the VM gets ready for SSH
-	err = waitUntilSSHReady(vm)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return waitUntilSSHReady(vm)
 }
 
 // Suspend always returns an error since we do not support for Openstack for now.

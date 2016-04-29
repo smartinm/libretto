@@ -144,12 +144,7 @@ func (vm *VM) Provision() error {
 		return err
 	}
 
-	err = cli.WaitForSSH(DefaultTimeout * time.Second)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return cli.WaitForSSH(DefaultTimeout * time.Second)
 }
 
 // GetIPs returns the IP addresses of the Azure VM instance.
@@ -234,12 +229,7 @@ func (vm *VM) Destroy() error {
 			vm.Name, vm.Name, err)
 	}
 
-	err = vm.deleteHostedService()
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return vm.deleteHostedService()
 }
 
 // Halt shuts down the VM.
