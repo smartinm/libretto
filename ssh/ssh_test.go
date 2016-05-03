@@ -5,7 +5,7 @@ package ssh
 import (
 	"testing"
 
-	cssh "github.com/apcera/libretto/Godeps/_workspace/src/golang.org/x/crypto/ssh"
+	cssh "golang.org/x/crypto/ssh"
 )
 
 func requireMockedClient() SSHClient {

@@ -15,7 +15,7 @@ import (
 	"os"
 	"runtime"
 
-	gossh "github.com/apcera/libretto/Godeps/_workspace/src/golang.org/x/crypto/ssh"
+	gossh "golang.org/x/crypto/ssh"
 )
 
 // NewKeyPair generates a new SSH keypair. This will return a private & public key encoded as DER.

@@ -6,12 +6,12 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/apcera/libretto/Godeps/_workspace/src/github.com/apcera/util/uuid"
-	"github.com/apcera/libretto/Godeps/_workspace/src/github.com/aws/aws-sdk-go/aws"
-	"github.com/apcera/libretto/Godeps/_workspace/src/github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/apcera/libretto/Godeps/_workspace/src/github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/apcera/libretto/Godeps/_workspace/src/github.com/aws/aws-sdk-go/aws/session"
-	"github.com/apcera/libretto/Godeps/_workspace/src/github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/apcera/util/uuid"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/ec2"
 )
 
 // ValidCredentials sends a dummy request to AWS to check if credentials are

@@ -15,8 +15,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/apcera/libretto/Godeps/_workspace/src/github.com/apcera/util/uuid"
 	"github.com/apcera/libretto/util"
+	"github.com/apcera/util/uuid"
 
 	libssh "github.com/apcera/libretto/ssh"
 	lvm "github.com/apcera/libretto/virtualmachine"

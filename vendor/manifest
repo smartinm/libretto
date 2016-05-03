@@ -1,0 +1,188 @@
+{
+	"version": 0,
+	"dependencies": [
+		{
+			"importpath": "github.com/Azure/azure-sdk-for-go/core/http",
+			"repository": "https://github.com/Azure/azure-sdk-for-go",
+			"vcs": "git",
+			"revision": "95361a2573b1fa92a00c5fc2707a80308483c6f9",
+			"branch": "HEAD",
+			"path": "/core/http",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/Azure/azure-sdk-for-go/core/tls",
+			"repository": "https://github.com/Azure/azure-sdk-for-go",
+			"vcs": "git",
+			"revision": "95361a2573b1fa92a00c5fc2707a80308483c6f9",
+			"branch": "HEAD",
+			"path": "/core/tls",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/Azure/azure-sdk-for-go/management",
+			"repository": "https://github.com/Azure/azure-sdk-for-go",
+			"vcs": "git",
+			"revision": "95361a2573b1fa92a00c5fc2707a80308483c6f9",
+			"branch": "HEAD",
+			"path": "/management",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/apcera/util/uuid",
+			"repository": "https://github.com/apcera/util",
+			"vcs": "git",
+			"revision": "5be235938229da74a2adac74ee88b947e0e1c8fc",
+			"branch": "HEAD",
+			"path": "/uuid",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/aws/aws-sdk-go/aws",
+			"repository": "https://github.com/aws/aws-sdk-go",
+			"vcs": "git",
+			"revision": "be2ec39e520e3c4088c0c6288055bdc8184a89ee",
+			"branch": "HEAD",
+			"path": "/aws",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/aws/aws-sdk-go/private/endpoints",
+			"repository": "https://github.com/aws/aws-sdk-go",
+			"vcs": "git",
+			"revision": "be2ec39e520e3c4088c0c6288055bdc8184a89ee",
+			"branch": "HEAD",
+			"path": "/private/endpoints",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/aws/aws-sdk-go/private/protocol",
+			"repository": "https://github.com/aws/aws-sdk-go",
+			"vcs": "git",
+			"revision": "be2ec39e520e3c4088c0c6288055bdc8184a89ee",
+			"branch": "HEAD",
+			"path": "/private/protocol",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/aws/aws-sdk-go/private/signer/v4",
+			"repository": "https://github.com/aws/aws-sdk-go",
+			"vcs": "git",
+			"revision": "be2ec39e520e3c4088c0c6288055bdc8184a89ee",
+			"branch": "HEAD",
+			"path": "/private/signer/v4",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/aws/aws-sdk-go/private/waiter",
+			"repository": "https://github.com/aws/aws-sdk-go",
+			"vcs": "git",
+			"revision": "be2ec39e520e3c4088c0c6288055bdc8184a89ee",
+			"branch": "HEAD",
+			"path": "/private/waiter",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/aws/aws-sdk-go/service/ec2",
+			"repository": "https://github.com/aws/aws-sdk-go",
+			"vcs": "git",
+			"revision": "be2ec39e520e3c4088c0c6288055bdc8184a89ee",
+			"branch": "HEAD",
+			"path": "/service/ec2",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/aws/aws-sdk-go/service/sts",
+			"repository": "https://github.com/aws/aws-sdk-go",
+			"vcs": "git",
+			"revision": "be2ec39e520e3c4088c0c6288055bdc8184a89ee",
+			"branch": "HEAD",
+			"path": "/service/sts",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/go-ini/ini",
+			"repository": "https://github.com/go-ini/ini",
+			"vcs": "git",
+			"revision": "060d7da055ba6ec5ea7a31f116332fe5efa04ce0",
+			"branch": "HEAD",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/jmespath/go-jmespath",
+			"repository": "https://github.com/jmespath/go-jmespath",
+			"vcs": "git",
+			"revision": "3433f3ea46d9f8019119e7dd41274e112a2359a9",
+			"branch": "HEAD",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/mitchellh/mapstructure",
+			"repository": "https://github.com/mitchellh/mapstructure",
+			"vcs": "git",
+			"revision": "281073eb9eb092240d33ef253c404f1cca550309",
+			"branch": "HEAD",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/rackspace/gophercloud",
+			"repository": "https://github.com/rackspace/gophercloud",
+			"vcs": "git",
+			"revision": "761cff8afb6a8e7f42c5554a90dae72f341bb481",
+			"branch": "HEAD",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/vmware/govmomi",
+			"repository": "https://github.com/vmware/govmomi",
+			"vcs": "git",
+			"revision": "c8df70bf7e64cb14c5305f4e16597c501a2eba8b",
+			"branch": "HEAD",
+			"notests": true
+		},
+		{
+			"importpath": "golang.org/x/crypto/curve25519",
+			"repository": "https://go.googlesource.com/crypto",
+			"vcs": "git",
+			"revision": "1f22c0103821b9390939b6776727195525381532",
+			"branch": "HEAD",
+			"path": "/curve25519",
+			"notests": true
+		},
+		{
+			"importpath": "golang.org/x/crypto/pkcs12",
+			"repository": "https://go.googlesource.com/crypto",
+			"vcs": "git",
+			"revision": "1f22c0103821b9390939b6776727195525381532",
+			"branch": "HEAD",
+			"path": "/pkcs12",
+			"notests": true
+		},
+		{
+			"importpath": "golang.org/x/crypto/ssh",
+			"repository": "https://go.googlesource.com/crypto",
+			"vcs": "git",
+			"revision": "1f22c0103821b9390939b6776727195525381532",
+			"branch": "HEAD",
+			"path": "/ssh",
+			"notests": true
+		},
+		{
+			"importpath": "golang.org/x/net/context",
+			"repository": "https://go.googlesource.com/net",
+			"vcs": "git",
+			"revision": "1d9fd3b8333e891c0e7353e1adcfe8a612573033",
+			"branch": "HEAD",
+			"path": "/context",
+			"notests": true
+		},
+		{
+			"importpath": "gopkg.in/yaml.v2",
+			"repository": "https://gopkg.in/yaml.v2",
+			"vcs": "git",
+			"revision": "a83829b6f1293c91addabc89d0571c246397bbf4",
+			"branch": "v2",
+			"notests": true
+		}
+	]
+}

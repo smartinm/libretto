@@ -9,12 +9,12 @@ import (
 	"net"
 	"time"
 
-	"github.com/apcera/libretto/Godeps/_workspace/src/github.com/aws/aws-sdk-go/aws"
-	"github.com/apcera/libretto/Godeps/_workspace/src/github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/apcera/libretto/Godeps/_workspace/src/github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/apcera/libretto/ssh"
 	"github.com/apcera/libretto/util"
 	"github.com/apcera/libretto/virtualmachine"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/aws/aws-sdk-go/service/ec2"
 )
 
 const (
