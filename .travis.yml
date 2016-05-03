@@ -8,12 +8,13 @@ os:
   - linux
   - osx
 env:
+  global:
+    - GO15VENDOREXPERIMENT=1
   matrix:
     - BUILD_GOARCH=amd64
     - BUILD_GOARCH=386
+install: true # avoids go get. assumes all necessary code is in the repo
 script:
   - go build
-  - go vet ./...
-  - go test -i -race ./...
+  - go vet $(go list ./... | grep -v /vendor/)
   - go test -v -race ./...
-
