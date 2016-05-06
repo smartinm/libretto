@@ -176,7 +176,7 @@ func (vm *VM) GetName() string {
 func (vm *VM) Provision() error {
 	client, err := getComputeClient(vm)
 	if err != nil {
-		return fmt.Errorf("Compute Client is not set for the VM: %s", err)
+		return fmt.Errorf("compute client is not set for the VM: %s", err)
 	}
 
 	// Get back an flavor ID string
@@ -190,7 +190,7 @@ func (vm *VM) Provision() error {
 	if vm.ImageID == "" {
 		imageID, err = findImageIDByName(client, vm.ImageMetadata.Name)
 		if err != nil {
-			return fmt.Errorf("Error on searching image: %s", err)
+			return fmt.Errorf("error on searching image: %s", err)
 		}
 
 		if imageID == "" {
@@ -241,7 +241,7 @@ func (vm *VM) Provision() error {
 
 	// Create and associate an floating IP for this VM
 	if vm.FloatingIPPool == "" {
-		return fmt.Errorf("Empty floating IP pool")
+		return fmt.Errorf("empty floating IP pool")
 	}
 
 	fip, err := floatingip.Create(client, &floatingip.CreateOpts{
@@ -249,12 +249,12 @@ func (vm *VM) Provision() error {
 	}).Extract()
 
 	if err != nil {
-		return fmt.Errorf("Unable to create a floating ip: %s", err)
+		return fmt.Errorf("unable to create a floating ip: %s", err)
 	}
 
 	err = floatingip.Associate(client, server.ID, fip.IP).ExtractErr()
 	if err != nil {
-		return fmt.Errorf("Unable to associate a floating ip: %s", err)
+		return fmt.Errorf("unable to associate a floating ip: %s", err)
 	}
 	vm.FloatingIP = fip
 
@@ -326,18 +326,18 @@ func (vm *VM) Destroy() error {
 
 	client, err := getComputeClient(vm)
 	if err != nil {
-		return fmt.Errorf("Compute Client is not set for the VM, %s", err)
+		return fmt.Errorf("compute client is not set for the VM, %s", err)
 	}
 
 	// Delete the floating IP first before destroying the VM
 	if vm.FloatingIP != nil {
 		err := floatingip.Disassociate(client, vm.InstanceID, vm.FloatingIP.IP).ExtractErr()
 		if err != nil {
-			return fmt.Errorf("Unable to disassociate floating ip from instance: %s", err)
+			return fmt.Errorf("unable to disassociate floating ip from instance: %s", err)
 		}
 		err = floatingip.Delete(client, vm.FloatingIP.ID).ExtractErr()
 		if err != nil {
-			return fmt.Errorf("Unable to delete floating ip: %s", err)
+			return fmt.Errorf("unable to delete floating ip: %s", err)
 		}
 	}
 
@@ -352,7 +352,7 @@ func (vm *VM) Destroy() error {
 	// Delete the instance
 	err = servers.Delete(client, vm.InstanceID).ExtractErr()
 	if err != nil {
-		return fmt.Errorf("Failed to destroy the vm: %s", err)
+		return fmt.Errorf("failed to destroy the vm: %s", err)
 	}
 
 	// Wait until its status becomes nil within ActionTimeout seconds.
@@ -366,7 +366,7 @@ func (vm *VM) Destroy() error {
 		if server == nil {
 			break
 		} else if server.Status == StateError {
-			return fmt.Errorf("Error on destroying the vm")
+			return fmt.Errorf("error on destroying the vm")
 		}
 
 		time.Sleep(1 * time.Second)
@@ -425,7 +425,7 @@ func (vm *VM) Halt() error {
 
 	client, err := getComputeClient(vm)
 	if err != nil {
-		return fmt.Errorf("Compute Client is not set for the VM, %s", err)
+		return fmt.Errorf("compute client is not set for the VM, %s", err)
 	}
 
 	// Take a look at the initial state of the VM. Make sure it is in ACTIVE state
@@ -435,13 +435,13 @@ func (vm *VM) Halt() error {
 	}
 
 	if state != lvm.VMRunning {
-		return fmt.Errorf("The VM is not active, so cannot be halted")
+		return fmt.Errorf("the VM is not active, so cannot be halted")
 	}
 
 	// Stop the VM (instance)
 	err = ss.Stop(client, vm.InstanceID).ExtractErr()
 	if err != nil {
-		return fmt.Errorf("Failed to stop the instance: %s", err)
+		return fmt.Errorf("failed to stop the instance: %s", err)
 	}
 
 	// Wait until VM halts
@@ -457,7 +457,7 @@ func (vm *VM) Start() error {
 
 	client, err := getComputeClient(vm)
 	if err != nil {
-		return fmt.Errorf("Compute Client is not set for the VM, %s", err)
+		return fmt.Errorf("compute client is not set for the VM, %s", err)
 	}
 
 	// Take a look at the initial state of the VM. Make sure it is in ACTIVE state
@@ -473,7 +473,7 @@ func (vm *VM) Start() error {
 	// Start the VM (instance)
 	err = ss.Start(client, vm.InstanceID).ExtractErr()
 	if err != nil {
-		return fmt.Errorf("Failed to start the instance")
+		return fmt.Errorf("failed to start the instance")
 	}
 
 	// Wait until the VM gets ready for SSH
