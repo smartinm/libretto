@@ -1,16 +1,16 @@
 
 language: go
 go:
-  - 1.5.3
-  - 1.6
+  - 1.5.4
+  - 1.6.2
   - tip
+os:
+  - linux
+  - osx
 env:
-  global:
-    - BUILD_GOARCH=amd64
   matrix:
-    - BUILD_GOOS=linux
-    - BUILD_GOOS=darwin
-    - BUILD_GOOS=windows
+    - BUILD_GOARCH=amd64
+    - BUILD_GOARCH=386
 script:
   - go build
   - go vet ./...
