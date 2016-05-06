@@ -144,12 +144,6 @@ func instanceInfo(vm *VM) *ec2.RunInstancesInput {
 	if vm.InstanceType == "" {
 		vm.InstanceType = defaultInstanceType
 	}
-	if vm.VolumeSize == 0 {
-		vm.VolumeSize = defaultVolumeSize
-	}
-	if vm.VolumeType == "" {
-		vm.VolumeType = defaultVolumeType
-	}
 
 	var sid *string
 	if vm.Subnet != "" {
@@ -162,20 +156,32 @@ func instanceInfo(vm *VM) *ec2.RunInstancesInput {
 		sgid[0] = aws.String(vm.SecurityGroup)
 	}
 
+	devices := make([]*ec2.BlockDeviceMapping, len(vm.Volumes))
+	for _, volume := range vm.Volumes {
+		if volume.VolumeSize == 0 {
+			volume.VolumeSize = defaultVolumeSize
+		}
+		if volume.VolumeType == "" {
+			volume.VolumeType = defaultVolumeType
+		}
+
+		devices = append(devices, &ec2.BlockDeviceMapping{
+			DeviceName: aws.String(volume.DeviceName),
+			Ebs: &ec2.EbsBlockDevice{
+				VolumeSize:          aws.Int64(int64(volume.VolumeSize)),
+				VolumeType:          aws.String(volume.VolumeType),
+				DeleteOnTermination: aws.Bool(!vm.KeepRootVolumeOnDestroy),
+			},
+		})
+	}
+
 	return &ec2.RunInstancesInput{
-		ImageId:      aws.String(vm.AMI),
-		InstanceType: aws.String(vm.InstanceType),
-		KeyName:      aws.String(vm.KeyPair),
-		MaxCount:     aws.Int64(instanceCount),
-		MinCount:     aws.Int64(instanceCount),
-		BlockDeviceMappings: []*ec2.BlockDeviceMapping{
-			{DeviceName: aws.String(vm.DeviceName),
-				Ebs: &ec2.EbsBlockDevice{
-					VolumeSize:          aws.Int64(int64(vm.VolumeSize)),
-					VolumeType:          aws.String(vm.VolumeType),
-					DeleteOnTermination: aws.Bool(!vm.KeepRootVolumeOnDestroy),
-				}},
-		},
+		ImageId:             aws.String(vm.AMI),
+		InstanceType:        aws.String(vm.InstanceType),
+		KeyName:             aws.String(vm.KeyPair),
+		MaxCount:            aws.Int64(instanceCount),
+		MinCount:            aws.Int64(instanceCount),
+		BlockDeviceMappings: devices,
 		Monitoring: &ec2.RunInstancesMonitoringEnabled{
 			Enabled: aws.Bool(true),
 		},

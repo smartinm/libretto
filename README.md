@@ -52,7 +52,11 @@ vm := &aws.VM{
                 SSHUser:       "ubuntu",
                 SSHPrivateKey: string(rawKey),
         },
-        DeviceName:    "/dev/sda1",
+        Volumes: []aws.EBSVolume{
+            {
+                DeviceName: "/dev/sda1",
+            },
+        },
         Region:        "ap-northeast-1",
         KeyPair:       strings.TrimSuffix(filepath.Base(*key), filepath.Ext(*key)),
         SecurityGroup: "sg-9fdsfds",
