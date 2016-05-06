@@ -9,6 +9,9 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"regexp"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/apcera/libretto/Godeps/_workspace/src/github.com/rackspace/gophercloud"
@@ -44,7 +47,7 @@ func getProviderClient(vm *VM) (*gophercloud.ProviderClient, error) {
 
 	providerClient, err := openstack.AuthenticatedClient(opts)
 	if providerClient == nil || err != nil {
-		return nil, fmt.Errorf("Failed to authenticate the client")
+		return nil, fmt.Errorf("failed to authenticate the client")
 	}
 
 	return providerClient, nil
@@ -107,43 +110,124 @@ func getBlockStorageClient(vm *VM) (*gophercloud.ServiceClient, error) {
 	return client, nil
 }
 
+// findImageAPIVersion finds the Image API version number. It first checks whether the given
+// imageEndpoint has version info. If it is not, then a Get request is sent to imageEndpoint to
+// fetch supported APIs. If any V2 api is supported then it returns 2, else If any V1 api is
+// supported then it returns 1. Otherwise, it returns an error.
+func findImageAPIVersion(tokenID string, imageEndpoint string) (int, error) {
+	// Try to fetch image API version from the imageEndpoint
+	if strings.HasSuffix(imageEndpoint, "/v1/") {
+		return 1, nil
+	}
+	if strings.HasSuffix(imageEndpoint, "/v2/") {
+		return 2, nil
+	}
+
+	// Try to fetch version number using the endpoint
+	versionReq, err := http.NewRequest("GET", imageEndpoint, nil)
+	if err != nil {
+		return 0, fmt.Errorf("unable to get image API version")
+	}
+
+	versionReq.Header.Add("X-Auth-Token", tokenID)
+	versionClient := &http.Client{}
+
+	// Send the request to upload the image
+	resp, err := versionClient.Do(versionReq)
+	if err != nil {
+		return 0, fmt.Errorf("failed to send a image API version request")
+	}
+	defer resp.Body.Close()
+
+	body, _ := ioutil.ReadAll(resp.Body)
+	bodyStr := string(body)
+	if resp.StatusCode != http.StatusMultipleChoices {
+		return 0, fmt.Errorf("image API version request returned bad response, %s", bodyStr)
+	}
+
+	// Prefer V2 over V1
+	if match, _ := regexp.MatchString(".*\"id\": \"v2\\.[0-2]+.*\"", bodyStr); match {
+		return 2, nil
+	}
+
+	if match, _ := regexp.MatchString(".*\"id\": \"v1\\.[0-1]+.*\"", bodyStr); match {
+		return 1, nil
+	}
+	return 0, fmt.Errorf("image API version is not supported")
+}
+
+func imageVersionEncoded(imageEndpoint string) bool {
+	if strings.HasSuffix(imageEndpoint, "/v1/") || strings.HasSuffix(imageEndpoint, "/v2/") {
+		return true
+	}
+	return false
+}
+
 // Reserves an Image ID at the specified image endpoint using the information in given imageMetadata
 // Returns the reserved Image ID if reservation is successful, otherwise returns an error.
 // Requires client's token to reserve the image.
-func reserveImage(tokenID string, imageEndpoint string, imageMetadata ImageMetadata) (string, error) {
-	imageStr, err := json.Marshal(imageMetadata)
+func reserveImage(tokenID string, imageEndpoint string, imageMetadata ImageMetadata, imageApiVersion int) (string, error) {
+	// Form the URI to create the image
+	imagesURI := ""
+	if imageVersionEncoded(imageEndpoint) {
+		imagesURI = fmt.Sprintf("%simages", imageEndpoint)
+	} else {
+		imagesURI = fmt.Sprintf("%sv%d/images", imageEndpoint, imageApiVersion)
+	}
 
+	// Prepare the request to create the image
+	var createReq *http.Request
+	var err error
+	if imageApiVersion == 1 {
+		createReq, err = http.NewRequest("POST", imagesURI, nil)
+	} else {
+		imageStr, err := json.Marshal(imageMetadata)
+		if err != nil {
+			return "", err
+		}
+
+		createReq, err = http.NewRequest("POST", imagesURI, bytes.NewBuffer(imageStr))
+	}
 	if err != nil {
 		return "", err
 	}
 
-	imagesURI := fmt.Sprintf("%sv2/images", imageEndpoint)
-	createReq, err := http.NewRequest("POST", imagesURI, bytes.NewBuffer(imageStr))
-
-	createReq.Header.Add("Content-Type", "application/json")
 	createReq.Header.Add("X-Auth-Token", tokenID)
+	if imageApiVersion == 1 {
+		createReq.Header.Add("Content-Type", "application/octet-stream")
+		createReq.Header.Add("X-Image-Meta-Name", imageMetadata.Name)
+		createReq.Header.Add("X-Image-Meta-container_format", imageMetadata.ContainerFormat)
+		createReq.Header.Add("X-Image-Meta-disk_format", imageMetadata.DiskFormat)
+		createReq.Header.Add("X-Image-Meta-min_disk", strconv.Itoa(imageMetadata.MinDisk))
+		createReq.Header.Add("X-Image-Meta-min_ram", strconv.Itoa(imageMetadata.MinRAM))
+	} else {
+		createReq.Header.Add("Content-Type", "application/json")
+	}
 
+	// Send the request to create the image
 	httpClient := &http.Client{}
 	resp, err := httpClient.Do(createReq)
-
 	if err != nil {
-		return "", fmt.Errorf("Failed to send a image reserve request")
+		return "", fmt.Errorf("failed to send a image reserve request")
 	}
 	defer resp.Body.Close()
-
+	body, _ := ioutil.ReadAll(resp.Body)
 	if resp.StatusCode != 201 {
-		return "", fmt.Errorf("Reserve Image request returned bad response, %s", resp.Body)
+		return "", fmt.Errorf("reserve image request returned bad response, %s", string(body))
 	}
 
-	body, _ := ioutil.ReadAll(resp.Body)
-
+	// Parse the result to see if image is created
 	var dat map[string]interface{}
 	if err := json.Unmarshal(body, &dat); err != nil {
 		return "", err
 	}
 
+	if imageApiVersion == 1 {
+		dat = dat["image"].(map[string]interface{})
+	}
+
 	if dat["status"] != imageQueued {
-		return "", fmt.Errorf("Image has never been queued")
+		return "", fmt.Errorf("image has never been created")
 	}
 
 	// Retrieve the image ID from http response block
@@ -152,31 +236,41 @@ func reserveImage(tokenID string, imageEndpoint string, imageMetadata ImageMetad
 	case string:
 		return idFromResponse.(string), nil
 	default:
-		return "", fmt.Errorf("Unable to parse the upload image response")
+		return "", fmt.Errorf("unable to parse the upload image response")
 	}
 }
 
 // Uploads the image to an reserved image location at the imageEndpoint using the reserved image ID and imageMetadata.
 // Returns nil error if the upload is successful, otherwise returns an error.
 // Requires client's token to upload the image.
-func uploadImage(tokenID string, imageEndpoint string, imageID string, imagePath string) error {
+func uploadImage(tokenID string, imageEndpoint string, imageID string, imagePath string, imageApiVersion int) error {
+	// Read the image file
 	file, err := os.Open(imagePath)
 	if err != nil {
-		return fmt.Errorf("Unable to open image file")
+		return fmt.Errorf("unable to open image file")
 	}
 	defer file.Close()
 
 	stat, err := file.Stat()
 	if err != nil {
-		return fmt.Errorf("Unable to get the stats of the image file: %s", err)
+		return fmt.Errorf("unable to get the stats of the image file: %s", err)
 	}
 	imageFileSize := stat.Size()
 
 	// Prepare the request to upload the image file
-	imageLocation := fmt.Sprintf("%sv2/images/%s/file", imageEndpoint, imageID)
+	imageLocation := ""
+	if imageVersionEncoded(imageEndpoint) {
+		imageLocation = fmt.Sprintf("%simages/%s", imageEndpoint, imageID)
+	} else {
+		imageLocation = fmt.Sprintf("%sv%d/images/%s", imageEndpoint, imageApiVersion, imageID)
+	}
+	if imageApiVersion == 2 {
+		imageLocation += "/file"
+	}
+
 	uploadReq, err := http.NewRequest("PUT", imageLocation, file)
 	if err != nil {
-		return fmt.Errorf("Unable to upload image to the openstack")
+		return fmt.Errorf("unable to upload image to the openstack")
 	}
 
 	uploadReq.Header.Add("Content-Type", "application/octet-stream")
@@ -188,12 +282,14 @@ func uploadImage(tokenID string, imageEndpoint string, imageID string, imagePath
 	// Send the request to upload the image
 	resp, err := uploadClient.Do(uploadReq)
 	if err != nil {
-		return fmt.Errorf("Failed to send a upload image request")
+		return fmt.Errorf("failed to send a upload image request")
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != 204 {
-		return fmt.Errorf("Upload Image request returned bad response, %s", resp.Body)
+	body, _ := ioutil.ReadAll(resp.Body)
+	if (imageApiVersion == 1 && resp.StatusCode != http.StatusOK) ||
+		(imageApiVersion == 2 && resp.StatusCode != http.StatusNoContent) {
+		return fmt.Errorf("upload image request returned bad response, %s", string(body))
 	}
 
 	return nil
@@ -216,14 +312,20 @@ func createImage(vm *VM) (string, error) {
 		return "", err
 	}
 
+	// Find the Image API version number
+	version, err := findImageAPIVersion(provider.TokenID, imageEndpoint)
+	if err != nil {
+		return "", err
+	}
+
 	// Reserve an ImageID at imageEndpoint using the given image metadata
-	imageID, err := reserveImage(provider.TokenID, imageEndpoint, vm.ImageMetadata)
+	imageID, err := reserveImage(provider.TokenID, imageEndpoint, vm.ImageMetadata, version)
 	if err != nil {
 		return "", err
 	}
 
 	// Upload the image to the imageEndpoint with reserved ImageID using the given image path
-	err = uploadImage(provider.TokenID, imageEndpoint, imageID, vm.ImagePath)
+	err = uploadImage(provider.TokenID, imageEndpoint, imageID, vm.ImagePath, version)
 	if err != nil {
 		return "", err
 	}
@@ -247,7 +349,7 @@ func getServer(vm *VM) (*servers.Server, error) {
 
 	status, err := servers.Get(client, vm.InstanceID).Extract()
 	if status != nil && err != nil {
-		return nil, fmt.Errorf("Failed to retrieve the server for VM")
+		return nil, fmt.Errorf("failed to retrieve the server for VM")
 	}
 
 	return status, nil
@@ -258,7 +360,7 @@ func findImageEndpoint(client *gophercloud.ProviderClient, eo gophercloud.Endpoi
 	eo.ApplyDefaults("image")
 	url, err := client.EndpointLocator(eo)
 	if err != nil {
-		return "", fmt.Errorf("Error on locating image endpoint")
+		return "", fmt.Errorf("error on locating image endpoint")
 	}
 	return url, nil
 }
@@ -278,7 +380,7 @@ func waitUntil(vm *VM, state string) error {
 		}
 
 		if curState == lvm.VMError {
-			return fmt.Errorf("Failed to bring the VM to state: %s", state)
+			return fmt.Errorf("failed to bring the VM to state: %s", state)
 		}
 
 		time.Sleep(1 * time.Second)
@@ -307,7 +409,7 @@ func createAndAttachVolume(vm *VM) error {
 
 	cClient, err := getComputeClient(vm)
 	if err != nil {
-		return fmt.Errorf("Compute Client is not set for the VM, %s", err)
+		return fmt.Errorf("compute client is not set for the VM, %s", err)
 	}
 
 	bsClient, err := getBlockStorageClient(vm)
@@ -320,26 +422,26 @@ func createAndAttachVolume(vm *VM) error {
 	vOpts := volumes.CreateOpts{Size: volume.Size, Name: volume.Name, VolumeType: volume.Type}
 	vol, err := volumes.Create(bsClient, vOpts).Extract()
 	if err != nil {
-		return fmt.Errorf("Failed to create a new volume for the VM: %s", err)
+		return fmt.Errorf("failed to create a new volume for the VM: %s", err)
 	}
 
 	// Wait until Volume becomes available
 	err = waitUntilVolume(bsClient, vol.ID, volumeStateAvailable)
 	if err != nil {
-		return fmt.Errorf("Failed to create a new volume for the VM: %s", err)
+		return fmt.Errorf("failed to create a new volume for the VM: %s", err)
 	}
 
 	// Attach the new volume to this VM
 	vaOpts := volumeattach.CreateOpts{Device: volume.Device, VolumeID: vol.ID}
 	va, err := volumeattach.Create(cClient, vm.InstanceID, vaOpts).Extract()
 	if err != nil {
-		return fmt.Errorf("Failed to attach the volume to the VM: %s", err)
+		return fmt.Errorf("failed to attach the volume to the VM: %s", err)
 	}
 
 	// Wait until Volume is attached to the VM
 	err = waitUntilVolume(bsClient, vol.ID, volumeStateInUse)
 	if err != nil {
-		return fmt.Errorf("Failed to attach the volume to the VM: %s", err)
+		return fmt.Errorf("failed to attach the volume to the VM: %s", err)
 	}
 
 	vm.Volume.ID = vol.ID
@@ -357,7 +459,7 @@ func deattachAndDeleteVolume(vm *VM) error {
 
 	cClient, err := getComputeClient(vm)
 	if err != nil {
-		return fmt.Errorf("Compute Client is not set for the VM, %s", err)
+		return fmt.Errorf("compute client is not set for the VM, %s", err)
 	}
 
 	bsClient, err := getBlockStorageClient(vm)
@@ -368,25 +470,25 @@ func deattachAndDeleteVolume(vm *VM) error {
 	// Deattach the volume from the VM
 	err = volumeattach.Delete(cClient, vm.InstanceID, vm.Volume.ID).ExtractErr()
 	if err != nil {
-		return fmt.Errorf("Failed to deattach volume from the VM: %s", err)
+		return fmt.Errorf("failed to deattach volume from the VM: %s", err)
 	}
 
 	// Wait until Volume is de-attached from the VM
 	err = waitUntilVolume(bsClient, vm.Volume.ID, volumeStateAvailable)
 	if err != nil {
-		return fmt.Errorf("Failed to deattach volume from the VM: %s", err)
+		return fmt.Errorf("failed to deattach volume from the VM: %s", err)
 	}
 
 	// Delete the volume
 	err = volumes.Delete(bsClient, vm.Volume.ID).ExtractErr()
 	if err != nil {
-		return fmt.Errorf("Failed to delete volume: %s", err)
+		return fmt.Errorf("failed to delete volume: %s", err)
 	}
 
 	// Wait until Volume is deleted
 	err = waitUntilVolume(bsClient, vm.Volume.ID, volumeStateDeleted)
 	if err != nil {
-		return fmt.Errorf("Failed to delete volume: %s", err)
+		return fmt.Errorf("failed to delete volume: %s", err)
 	}
 
 	return nil
@@ -396,7 +498,7 @@ func deattachAndDeleteVolume(vm *VM) error {
 // no image or more than one image with the given Image Name.
 func findImageIDByName(client *gophercloud.ServiceClient, imageName string) (string, error) {
 	if imageName == "" {
-		return "", fmt.Errorf("Empty image name")
+		return "", fmt.Errorf("empty image name")
 	}
 
 	// We have the option of filtering the image list. If we want the full
@@ -406,12 +508,12 @@ func findImageIDByName(client *gophercloud.ServiceClient, imageName string) (str
 	// Retrieve image list
 	page, err := images.ListDetail(client, opts).AllPages()
 	if err != nil {
-		return "", fmt.Errorf("Error on retrieving image pages: %s", err)
+		return "", fmt.Errorf("error on retrieving image pages: %s", err)
 	}
 
 	imageList, err := images.ExtractImages(page)
 	if err != nil {
-		return "", fmt.Errorf("Error on extracting image list: %s", err)
+		return "", fmt.Errorf("error on extracting image list: %s", err)
 	}
 
 	if len(imageList) == 0 {
@@ -419,7 +521,7 @@ func findImageIDByName(client *gophercloud.ServiceClient, imageName string) (str
 	}
 
 	if len(imageList) > 1 {
-		return "", fmt.Errorf("There exists more than one image with the same name")
+		return "", fmt.Errorf("there exists more than one image with the same name")
 	}
 
 	return imageList[0].ID, err
@@ -433,11 +535,11 @@ func waitUntilVolume(blockStorateClient *gophercloud.ServiceClient, volumeID str
 		case vol == nil && state == "nil":
 			return nil
 		case vol == nil || err != nil:
-			return fmt.Errorf("Failed on getting volume Status: %s", err)
+			return fmt.Errorf("failed on getting volume Status: %s", err)
 		case vol.Status == state:
 			return nil
 		case vol.Status == lvm.VMError || vol.Status == volumeStateErrorDeleting:
-			return fmt.Errorf("Failed to bring the volume to state %s, ended up at state %s", state, vol.Status)
+			return fmt.Errorf("failed to bring the volume to state %s, ended up at state %s", state, vol.Status)
 		}
 		time.Sleep(1 * time.Second)
 	}
