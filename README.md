@@ -7,7 +7,7 @@ Libretto
 
 Libretto is a Golang library to create Virtual Machines (VM) on any cloud and
 Virtual Machine hosting platforms such as AWS, Azure, OpenStack, vSphere, VMware
-Workstation/Fusion or VirtualBox. Different providers have different utilities
+Workstation/Fusion, Exoscale or VirtualBox. Different providers have different utilities
 and API interfaces to achieve that, but the abstractions of their interfaces are
 quite similar.
 
@@ -21,6 +21,7 @@ Supported Providers
 * Virtualbox >= 4.3.30
 * Azure
 * DigitalOcean
+* Exoscale
 
 Getting Started
 ================
@@ -203,6 +204,51 @@ Openstack
         return err
 	}
  ```
+
+Exoscale
+---------
+
+ ``` go
+
+  vm := exoscale.VM{
+     Config: exoscale.Config{
+       Endpoint:  "https://api.exoscale.ch/compute",
+       APIKey:    os.Getenv("EXOSCALE_API_KEY"),
+       APISecret: os.Getenv("EXOSCALE_API_SECRET"),
+     },
+     Template: exoscale.Template{
+       Name:      "Linux Ubuntu 16.04 LTS 64-bit",
+       StorageGB: 10,
+       ZoneName:  "ch-dk-2",
+     },
+     ServiceOffering: exoscale.ServiceOffering{
+       Name: exoscale.Medium,
+     },
+     SecurityGroups: []exoscale.SecurityGroup{
+       {Name: "default"},
+       {Name: "my sg"},
+     },
+     Zone: exoscale.Zone{
+       Name: "ch-dk-2",
+     },
+     KeypairName: "mydev",
+     Name:        "libretto-exoscale",
+     Userdata: `
+#cloud-config
+manage_etc_hosts: true
+fqdn: new.host
+`,
+  }
+
+  if err := vm.Provision(); err != nil {
+ 		fmt.Printf("Error provisioning machine: %s\n", err)
+ 	}
+
+  // get VM ID polling every 5 seconds, timeout after 30
+  vm.WaitVMCreation(30, 5)
+
+  ```
+
 
 FAQ
 ====
