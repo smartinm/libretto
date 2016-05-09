@@ -90,9 +90,7 @@ type VM struct {
 	InstanceID   string
 	KeyPair      string // required
 
-	DeviceName                   string
-	VolumeSize                   int
-	VolumeType                   string
+	Volumes                      []EBSVolume
 	KeepRootVolumeOnDestroy      bool
 	DeleteNonRootVolumeOnDestroy bool
 
@@ -102,6 +100,12 @@ type VM struct {
 
 	SSHCreds            ssh.Credentials // required
 	DeleteKeysOnDestroy bool
+}
+
+type EBSVolume struct {
+	DeviceName string
+	VolumeSize int
+	VolumeType string
 }
 
 // GetName returns the name of the virtual machine
