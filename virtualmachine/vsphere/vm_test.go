@@ -10,15 +10,15 @@ import (
 	"os"
 	"testing"
 
-	"github.com/apcera/libretto/Godeps/_workspace/src/golang.org/x/net/context"
+	"golang.org/x/net/context"
 
-	"github.com/apcera/libretto/Godeps/_workspace/src/github.com/vmware/govmomi"
-	"github.com/apcera/libretto/Godeps/_workspace/src/github.com/vmware/govmomi/object"
-	"github.com/apcera/libretto/Godeps/_workspace/src/github.com/vmware/govmomi/property"
-	"github.com/apcera/libretto/Godeps/_workspace/src/github.com/vmware/govmomi/vim25"
-	"github.com/apcera/libretto/Godeps/_workspace/src/github.com/vmware/govmomi/vim25/mo"
-	"github.com/apcera/libretto/Godeps/_workspace/src/github.com/vmware/govmomi/vim25/types"
 	"github.com/apcera/libretto/virtualmachine"
+	"github.com/vmware/govmomi"
+	"github.com/vmware/govmomi/object"
+	"github.com/vmware/govmomi/property"
+	"github.com/vmware/govmomi/vim25"
+	"github.com/vmware/govmomi/vim25/mo"
+	"github.com/vmware/govmomi/vim25/types"
 )
 
 type mockProgressReader struct {

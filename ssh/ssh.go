@@ -16,7 +16,7 @@ import (
 	"sync"
 	"time"
 
-	cssh "github.com/apcera/libretto/Godeps/_workspace/src/golang.org/x/crypto/ssh"
+	cssh "golang.org/x/crypto/ssh"
 )
 
 var (

@@ -14,12 +14,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/apcera/libretto/Godeps/_workspace/src/github.com/rackspace/gophercloud"
-	"github.com/apcera/libretto/Godeps/_workspace/src/github.com/rackspace/gophercloud/openstack"
-	"github.com/apcera/libretto/Godeps/_workspace/src/github.com/rackspace/gophercloud/openstack/blockstorage/v1/volumes"
-	"github.com/apcera/libretto/Godeps/_workspace/src/github.com/rackspace/gophercloud/openstack/compute/v2/extensions/volumeattach"
-	"github.com/apcera/libretto/Godeps/_workspace/src/github.com/rackspace/gophercloud/openstack/compute/v2/images"
-	"github.com/apcera/libretto/Godeps/_workspace/src/github.com/rackspace/gophercloud/openstack/compute/v2/servers"
+	"github.com/rackspace/gophercloud"
+	"github.com/rackspace/gophercloud/openstack"
+	"github.com/rackspace/gophercloud/openstack/blockstorage/v1/volumes"
+	"github.com/rackspace/gophercloud/openstack/compute/v2/extensions/volumeattach"
+	"github.com/rackspace/gophercloud/openstack/compute/v2/images"
+	"github.com/rackspace/gophercloud/openstack/compute/v2/servers"
 
 	"github.com/apcera/libretto/ssh"
 	lvm "github.com/apcera/libretto/virtualmachine"

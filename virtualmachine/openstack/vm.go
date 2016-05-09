@@ -8,15 +8,15 @@ import (
 	"net"
 	"time"
 
-	"github.com/apcera/libretto/Godeps/_workspace/src/github.com/rackspace/gophercloud"
-	"github.com/apcera/libretto/Godeps/_workspace/src/github.com/rackspace/gophercloud/openstack/compute/v2/extensions/floatingip"
-	ss "github.com/apcera/libretto/Godeps/_workspace/src/github.com/rackspace/gophercloud/openstack/compute/v2/extensions/startstop"
-	"github.com/apcera/libretto/Godeps/_workspace/src/github.com/rackspace/gophercloud/openstack/compute/v2/flavors"
-	"github.com/apcera/libretto/Godeps/_workspace/src/github.com/rackspace/gophercloud/openstack/compute/v2/servers"
-	"github.com/apcera/libretto/Godeps/_workspace/src/github.com/rackspace/gophercloud/openstack/networking/v2/networks"
 	"github.com/apcera/libretto/ssh"
 	"github.com/apcera/libretto/util"
 	lvm "github.com/apcera/libretto/virtualmachine"
+	"github.com/rackspace/gophercloud"
+	"github.com/rackspace/gophercloud/openstack/compute/v2/extensions/floatingip"
+	ss "github.com/rackspace/gophercloud/openstack/compute/v2/extensions/startstop"
+	"github.com/rackspace/gophercloud/openstack/compute/v2/flavors"
+	"github.com/rackspace/gophercloud/openstack/compute/v2/servers"
+	"github.com/rackspace/gophercloud/openstack/networking/v2/networks"
 )
 
 // Compiler will complain if openstack.VM doesn't implement VirtualMachine interface.

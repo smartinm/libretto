@@ -8,8 +8,8 @@ import (
 	"net"
 	"time"
 
-	"github.com/apcera/libretto/Godeps/_workspace/src/github.com/Azure/azure-sdk-for-go/management/virtualmachine"
-	"github.com/apcera/libretto/Godeps/_workspace/src/github.com/Azure/azure-sdk-for-go/management/vmutils"
+	"github.com/Azure/azure-sdk-for-go/management/virtualmachine"
+	"github.com/Azure/azure-sdk-for-go/management/vmutils"
 	"github.com/apcera/libretto/util"
 
 	"github.com/apcera/libretto/ssh"

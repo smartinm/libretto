@@ -10,10 +10,10 @@ import (
 
 	lvm "github.com/apcera/libretto/virtualmachine"
 
-	"github.com/apcera/libretto/Godeps/_workspace/src/github.com/Azure/azure-sdk-for-go/management"
-	"github.com/apcera/libretto/Godeps/_workspace/src/github.com/Azure/azure-sdk-for-go/management/hostedservice"
-	"github.com/apcera/libretto/Godeps/_workspace/src/github.com/Azure/azure-sdk-for-go/management/virtualmachine"
-	"github.com/apcera/libretto/Godeps/_workspace/src/github.com/Azure/azure-sdk-for-go/management/virtualnetwork"
+	"github.com/Azure/azure-sdk-for-go/management"
+	"github.com/Azure/azure-sdk-for-go/management/hostedservice"
+	"github.com/Azure/azure-sdk-for-go/management/virtualmachine"
+	"github.com/Azure/azure-sdk-for-go/management/virtualnetwork"
 )
 
 // Cache the Azure client object.

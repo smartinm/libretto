@@ -13,16 +13,16 @@ import (
 	"sync"
 	"time"
 
-	"github.com/apcera/libretto/Godeps/_workspace/src/github.com/vmware/govmomi"
-	"github.com/apcera/libretto/Godeps/_workspace/src/github.com/vmware/govmomi/find"
-	"github.com/apcera/libretto/Godeps/_workspace/src/github.com/vmware/govmomi/object"
-	"github.com/apcera/libretto/Godeps/_workspace/src/github.com/vmware/govmomi/property"
-	"github.com/apcera/libretto/Godeps/_workspace/src/github.com/vmware/govmomi/vim25/types"
 	"github.com/apcera/libretto/ssh"
 	"github.com/apcera/libretto/util"
 	lvm "github.com/apcera/libretto/virtualmachine"
+	"github.com/vmware/govmomi"
+	"github.com/vmware/govmomi/find"
+	"github.com/vmware/govmomi/object"
+	"github.com/vmware/govmomi/property"
+	"github.com/vmware/govmomi/vim25/types"
 
-	"github.com/apcera/libretto/Godeps/_workspace/src/golang.org/x/net/context"
+	"golang.org/x/net/context"
 )
 
 type vmwareFinder struct {
