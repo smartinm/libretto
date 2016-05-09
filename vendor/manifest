@@ -125,6 +125,15 @@
 			"notests": true
 		},
 		{
+			"importpath": "github.com/pyr/egoscale/src/egoscale",
+			"repository": "https://github.com/pyr/egoscale",
+			"vcs": "git",
+			"revision": "4897492dd3a23b4405af9aec45b6a9e1c1b29c73",
+			"branch": "master",
+			"path": "/src/egoscale",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/rackspace/gophercloud",
 			"repository": "https://github.com/rackspace/gophercloud",
 			"vcs": "git",
