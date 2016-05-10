@@ -73,6 +73,14 @@ func (c *MockSSHClient) SetSSHPrivateKey(s string) {
 	return
 }
 
+// GetSSHPrivateKey calls the mocked GetSSHPrivateKey
+func (c *MockSSHClient) GetSSHPrivateKey() string {
+	if c.MockGetSSHPrivateKey != nil {
+		return c.MockGetSSHPrivateKey()
+	}
+	return ""
+}
+
 // SetSSHPassword calls the mocked SetSSHPassword
 func (c *MockSSHClient) SetSSHPassword(s string) {
 	if c.MockSetSSHPassword != nil {
@@ -80,4 +88,12 @@ func (c *MockSSHClient) SetSSHPassword(s string) {
 		return
 	}
 	return
+}
+
+// GetSSHPassword calls the mocked GetSSHPassword
+func (c *MockSSHClient) GetSSHPassword() string {
+	if c.MockGetSSHPassword != nil {
+		return c.MockGetSSHPassword()
+	}
+	return ""
 }

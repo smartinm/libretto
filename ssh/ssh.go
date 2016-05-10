@@ -64,7 +64,9 @@ type Client interface {
 	WaitForSSH(maxWait time.Duration) error
 
 	SetSSHPrivateKey(string)
+	GetSSHPrivateKey() string
 	SetSSHPassword(string)
+	GetSSHPassword() string
 }
 
 // Credentials supplies SSH credentials.
@@ -102,7 +104,9 @@ type MockSSHClient struct {
 	MockWaitForSSH func(maxWait time.Duration) error
 
 	MockSetSSHPrivateKey func(string)
+	MockGetSSHPrivateKey func() string
 	MockSetSSHPassword   func(string)
+	MockGetSSHPassword   func() string
 }
 
 // dial will attempt to connect to an SSH server.
@@ -434,5 +438,11 @@ func (client *SSHClient) WaitForSSH(maxWait time.Duration) error {
 // SetSSHPrivateKey sets the private key on the clients credentials.
 func (client *SSHClient) SetSSHPrivateKey(s string) { client.Creds.SSHPrivateKey = s }
 
+// GetSSHPrivateKey gets the private key on the clients credentials.
+func (client *SSHClient) GetSSHPrivateKey() string { return client.Creds.SSHPrivateKey }
+
 // SetSSHPassword sets the SSH password on the clients credentials.
 func (client *SSHClient) SetSSHPassword(s string) { client.Creds.SSHPassword = s }
+
+// GetSSHPassword gets the SSH password on the clients credentials.
+func (client *SSHClient) GetSSHPassword() string { return client.Creds.SSHPassword }
