@@ -301,8 +301,8 @@ Libretto `VirtualMachine` interface. The provider should work at the minimum on
 the Linux, Windows and OS X platforms unless it is a platform specific provider
 in which case it should at least compile and return a descriptive error.
 
-Dependencies should be versioned and stored using `Godeps`
-(https://github.com/tools/godep)
+Dependencies should be versioned and stored using `gvt`
+(https://github.com/FiloSottile/gvt)
 
 Errors should be lower case so that they can be wrapped by the calling code. If
 possible, types defined in the top level `virtualmachine` package should be
