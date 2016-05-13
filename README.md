@@ -311,7 +311,7 @@ reused.
 Contributors
 =============
 
-https://github.com/apcera/libretto/graphs/contributors
+https://github.com/apcera/libretto/graphs/contributors with special thanks to Renee French for original creation of the Go Gopher and Rachel Thieman for the outfit.
 
 [License-URL]: https://opensource.org/licenses/Apache-2.0
 [License-Image]: https://img.shields.io/:license-apache-blue.svg
