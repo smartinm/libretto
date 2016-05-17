@@ -71,6 +71,7 @@ type Client interface {
 
 // Credentials supplies SSH credentials.
 type Credentials struct {
+	mu            sync.Mutex
 	SSHUser       string
 	SSHPassword   string
 	SSHPrivateKey string
@@ -436,13 +437,29 @@ func (client *SSHClient) WaitForSSH(maxWait time.Duration) error {
 }
 
 // SetSSHPrivateKey sets the private key on the clients credentials.
-func (client *SSHClient) SetSSHPrivateKey(s string) { client.Creds.SSHPrivateKey = s }
+func (client *SSHClient) SetSSHPrivateKey(s string) {
+	client.Creds.mu.Lock()
+	client.Creds.SSHPrivateKey = s
+	client.Creds.mu.Unlock()
+}
 
 // GetSSHPrivateKey gets the private key on the clients credentials.
-func (client *SSHClient) GetSSHPrivateKey() string { return client.Creds.SSHPrivateKey }
+func (client *SSHClient) GetSSHPrivateKey() string {
+	client.Creds.mu.Lock()
+	defer client.Creds.mu.Unlock()
+	return client.Creds.SSHPrivateKey
+}
 
 // SetSSHPassword sets the SSH password on the clients credentials.
-func (client *SSHClient) SetSSHPassword(s string) { client.Creds.SSHPassword = s }
+func (client *SSHClient) SetSSHPassword(s string) {
+	client.Creds.mu.Lock()
+	client.Creds.SSHPassword = s
+	client.Creds.mu.Unlock()
+}
 
 // GetSSHPassword gets the SSH password on the clients credentials.
-func (client *SSHClient) GetSSHPassword() string { return client.Creds.SSHPassword }
+func (client *SSHClient) GetSSHPassword() string {
+	client.Creds.mu.Lock()
+	defer client.Creds.mu.Unlock()
+	return client.Creds.SSHPassword
+}
