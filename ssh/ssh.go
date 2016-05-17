@@ -232,6 +232,16 @@ func (client *SSHClient) Download(dst io.WriteCloser, remotePath string) error {
 
 	defer session.Close()
 
+	ackPipe, err := session.StdinPipe()
+	if err != nil {
+		return err
+	}
+
+	dataPipe, err := session.StdoutPipe()
+	if err != nil {
+		return err
+	}
+
 	errorChan := make(chan error, 3)
 
 	wg := sync.WaitGroup{}
@@ -240,11 +250,6 @@ func (client *SSHClient) Download(dst io.WriteCloser, remotePath string) error {
 	// This goroutine is for writing the scp header message.
 	go func() {
 		defer wg.Done()
-
-		ackPipe, err := session.StdinPipe()
-		if err != nil {
-			errorChan <- err
-		}
 
 		defer ackPipe.Close()
 
@@ -258,11 +263,6 @@ func (client *SSHClient) Download(dst io.WriteCloser, remotePath string) error {
 	// This goroutine is for downloading the file.
 	go func() {
 		defer wg.Done()
-
-		dataPipe, err := session.StdoutPipe()
-		if err != nil {
-			errorChan <- err
-		}
 
 		// First line of data is permissions, size, and name.
 		// For example: C0666 14 somefile
@@ -350,6 +350,11 @@ func (client *SSHClient) Upload(src io.Reader, dst string, mode uint32) error {
 
 	defer session.Close()
 
+	w, err := session.StdinPipe()
+	if err != nil {
+		return err
+	}
+
 	errorChan := make(chan error, 2)
 	remoteDir := path.Dir(dst)
 	remoteFileName := path.Base(dst)
@@ -358,14 +363,8 @@ func (client *SSHClient) Upload(src io.Reader, dst string, mode uint32) error {
 	wg.Add(2)
 
 	go func() {
-		defer wg.Done()
-
-		w, err := session.StdinPipe()
-		if err != nil {
-			errorChan <- err
-			return
-		}
 		defer w.Close()
+		defer wg.Done()
 
 		// Signals to the SSH receiver that content is being passed.
 		fmt.Fprintf(w, "C%#o %d %s\n", mode, len(fileContent), remoteFileName)
@@ -381,7 +380,6 @@ func (client *SSHClient) Upload(src io.Reader, dst string, mode uint32) error {
 
 	go func() {
 		defer wg.Done()
-
 		if err := session.Run(fmt.Sprintf("/usr/bin/scp -t %s", remoteDir)); err != nil {
 			errorChan <- err
 			return
