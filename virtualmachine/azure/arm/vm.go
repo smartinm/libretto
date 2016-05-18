@@ -1,6 +1,6 @@
 // Copyright 2016 Apcera Inc. All rights reserved.
 
-// Package azure provides methods for creating and manipulating VMs on Azure.
+// Package arm provides methods for creating and manipulating VMs on Azure using arm API.
 package arm
 
 import (
@@ -14,7 +14,6 @@ import (
 	lvm "github.com/apcera/libretto/virtualmachine"
 
 	"github.com/Azure/azure-sdk-for-go/arm/compute"
-	"github.com/Azure/go-autorest/autorest"
 	"github.com/Azure/go-autorest/autorest/azure"
 )
 
@@ -26,27 +25,31 @@ const (
 	PrivateIP = 1
 
 	// DefaultTimeout is the maximum seconds to wait before failing to GetSSH.
-	DefaultTimeout = 800
+	defaultTimeout = 60
 
-	// VM Statuses
-	Running = "VM running"
-	Stopped = "VM stopped"
+	// Running is status returned when the VM is running
+	running = "VM running"
+	// Stopped is status returned when the VM is halted
+	stopped = "VM stopped"
 
-	// Deployment Statuses
-	Succeeded = "Succeeded"
+	// Succeded is the status returned when a deployment ends successfully
+	succeeded = "Succeeded"
 
 	// Deployment name when provisioning a VM
 	deploymentName = "libretto"
+
+	// Maximum length that public ip can have
+	maxPublicIPLength = 63
 )
 
 var _ lvm.VirtualMachine = (*VM)(nil)
 
-// Authentication via OAUTH
+// OAuthCredentials is the struct that stors OAUTH credentials
 type OAuthCredentials struct {
-	ClientID       string `mapstructure:"client_id"`
-	ClientSecret   string `mapstructure:"client_secret"`
-	TenantID       string `mapstructure:"tenant_id"`
-	SubscriptionID string `mapstructure:"subscription_id"`
+	ClientID       string
+	ClientSecret   string
+	TenantID       string
+	SubscriptionID string
 }
 
 // VM represents an Azure virtual machine.
@@ -55,33 +58,34 @@ type VM struct {
 	Creds OAuthCredentials
 
 	// Image Properties
-	ImagePublisher string `mapstructure:"image_publisher"`
-	ImageOffer     string `mapstructure:"image_offer"`
-	ImageSku       string `mapstructure:"image_sku"`
-	Location       string `mapstructure:"location"`
+	ImagePublisher string
+	ImageOffer     string
+	ImageSku       string
 
 	// VM Properties
-	Size string `mapstructure:"vm_size"`
-	Name string `mapstructure:"vm_name"`
+	Size string
+	Name string
 
 	// SSH Properties
 	SSHCreds ssh.Credentials // required
 
 	// Deployment Properties
-	ResourceGroup  string `mapstructure:"resource_group"`
-	StorageAccount string `mapstructure:"storage_account"`
+	ResourceGroup    string
+	StorageAccount   string
+	StorageContainer string
 
 	// Authorizer to connect to Azure
-	authorizer autorest.Authorizer
+	Authorizer *azure.ServicePrincipalToken
 
 	// VM OS Properties
-	osFile string `mapstructure:"os_file"`
+	OsFile string
 
 	// VM Network Properties
-	publicIP       string `mapstructure:"public_ip"`
-	nic            string `mapstructure:"nic"`
-	Subnet         string `mapstructure:"subnet"`
-	VirtualNetwork string `mapstructure:"virtual_network"`
+	NetworkSecurityGroup string
+	Nic                  string
+	PublicIP             string
+	Subnet               string
+	VirtualNetwork       string
 }
 
 // GetName returns the name of the VM.
@@ -103,13 +107,18 @@ func (vm *VM) Provision() error {
 	if err != nil {
 		return err
 	}
-	vm.authorizer = spt
+	vm.Authorizer = spt
 
 	// Set up private members of the VM
 	tempName := fmt.Sprintf("%s-%s", vm.Name, randStringRunes(6))
-	vm.osFile = tempName + "-os-disk.vhd"
-	vm.publicIP = tempName + "-public-ip"
-	vm.nic = tempName + "-nic"
+	vm.OsFile = tempName + "-os-disk.vhd"
+	vm.PublicIP = tempName + "-public-ip"
+	vm.Nic = tempName + "-nic"
+
+	publicIPLength := len(vm.PublicIP)
+	if publicIPLength > maxPublicIPLength {
+		vm.PublicIP = vm.PublicIP[publicIPLength-maxPublicIPLength:]
+	}
 
 	// Create and send the deployment
 	vm.deploy()
@@ -120,12 +129,7 @@ func (vm *VM) Provision() error {
 		return err
 	}
 
-	err = cli.WaitForSSH(DefaultTimeout * time.Second)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return cli.WaitForSSH(defaultTimeout * time.Second)
 }
 
 // GetIPs returns the IP addresses of the Azure VM instance.
@@ -168,11 +172,11 @@ func (vm *VM) GetSSH(options ssh.Options) (ssh.Client, error) {
 
 // GetState returns the status of the Azure VM. The status will be one of the
 // following:
-//     "Running"
-//     "Halted"
+//     "running"
+//     "stopped"
 func (vm *VM) GetState() (string, error) {
 	virtualMachinesClient := compute.NewVirtualMachinesClient(vm.Creds.SubscriptionID)
-	virtualMachinesClient.Authorizer = vm.authorizer
+	virtualMachinesClient.Authorizer = vm.Authorizer
 
 	r, e := virtualMachinesClient.Get(vm.ResourceGroup, vm.Name, "InstanceView")
 	if r.Properties != nil && r.Properties.InstanceView != nil {
@@ -186,7 +190,7 @@ func (vm *VM) GetState() (string, error) {
 func (vm *VM) Destroy() error {
 	// Delete the VM
 	virtualMachinesClient := compute.NewVirtualMachinesClient(vm.Creds.SubscriptionID)
-	virtualMachinesClient.Authorizer = vm.authorizer
+	virtualMachinesClient.Authorizer = vm.Authorizer
 
 	_, err := virtualMachinesClient.Delete(vm.ResourceGroup, vm.Name, nil)
 	if err != nil {
@@ -194,18 +198,18 @@ func (vm *VM) Destroy() error {
 	}
 
 	// Make sure VM is deleted
-	poller := NewPoller(func() (string, error) {
-		r, e := virtualMachinesClient.Get(vm.ResourceGroup, vm.Name, "InstanceView")
-		if r.Properties != nil && r.Properties.InstanceView != nil {
-			state := *(*r.Properties.InstanceView.Statuses)[1].DisplayStatus
-			return translateState(state), e
+	poller := newPoller(func() (string, error) {
+		result, err := virtualMachinesClient.Get(vm.ResourceGroup, vm.Name, "InstanceView")
+		if result.Properties != nil && result.Properties.InstanceView != nil {
+			state := *(*result.Properties.InstanceView.Statuses)[1].DisplayStatus
+			return translateState(state), err
 		}
 
-		return "UNKNOWN", e
+		return lvm.VMUnknown, err
 	})
 
-	_, err = poller.PollAsNeeded()
-	if err != nil && !strings.Contains(err.Error(), "Code=\"ResourceNotFound\"") {
+	_, err = poller.pollAsNeeded()
+	if err != nil && !strings.Contains(err.Error(), `Code="ResourceNotFound"`) {
 		return err
 	}
 
@@ -222,18 +226,14 @@ func (vm *VM) Destroy() error {
 	}
 
 	// Delete the public IP of this VM
-	err = vm.deletePublicIP()
-	if err != nil {
-		return err
-	}
-	return nil
+	return vm.deletePublicIP()
 }
 
 // Halt shuts down the VM.
 func (vm *VM) Halt() error {
 	// Poweroff the VM
 	virtualMachinesClient := compute.NewVirtualMachinesClient(vm.Creds.SubscriptionID)
-	virtualMachinesClient.Authorizer = vm.authorizer
+	virtualMachinesClient.Authorizer = vm.Authorizer
 
 	_, err := virtualMachinesClient.PowerOff(vm.ResourceGroup, vm.Name, nil)
 	if err != nil {
@@ -241,23 +241,23 @@ func (vm *VM) Halt() error {
 	}
 
 	// Make sure the VM is stopped
-	poller := NewPoller(func() (string, error) {
-		r, e := virtualMachinesClient.Get(vm.ResourceGroup, vm.Name, "InstanceView")
-		if r.Properties != nil && r.Properties.InstanceView != nil {
-			state := *(*r.Properties.InstanceView.Statuses)[1].DisplayStatus
-			return state, e
+	poller := newPoller(func() (string, error) {
+		result, err := virtualMachinesClient.Get(vm.ResourceGroup, vm.Name, "InstanceView")
+		if result.Properties != nil && result.Properties.InstanceView != nil {
+			state := *(*result.Properties.InstanceView.Statuses)[1].DisplayStatus
+			return state, err
 		}
 
-		return "UNKNOWN", e
+		return lvm.VMUnknown, err
 	})
 
-	state, err := poller.PollAsNeeded()
+	state, err := poller.pollAsNeeded()
 	if err != nil {
 		return err
 	}
 
-	if state != Stopped {
-		return fmt.Errorf("halt failed with a status of '%s'.", state)
+	if state != stopped {
+		return fmt.Errorf("halt failed with a status of '%s'", state)
 	}
 	return nil
 }
@@ -266,7 +266,7 @@ func (vm *VM) Halt() error {
 func (vm *VM) Start() error {
 	// Start the VM
 	virtualMachinesClient := compute.NewVirtualMachinesClient(vm.Creds.SubscriptionID)
-	virtualMachinesClient.Authorizer = vm.authorizer
+	virtualMachinesClient.Authorizer = vm.Authorizer
 
 	_, err := virtualMachinesClient.Start(vm.ResourceGroup, vm.Name, nil)
 	if err != nil {
@@ -274,23 +274,23 @@ func (vm *VM) Start() error {
 	}
 
 	// Make sure the VM is running
-	poller := NewPoller(func() (string, error) {
-		r, e := virtualMachinesClient.Get(vm.ResourceGroup, vm.Name, "InstanceView")
-		if r.Properties != nil && r.Properties.InstanceView != nil {
-			state := *(*r.Properties.InstanceView.Statuses)[1].DisplayStatus
-			return state, e
+	poller := newPoller(func() (string, error) {
+		result, err := virtualMachinesClient.Get(vm.ResourceGroup, vm.Name, "InstanceView")
+		if result.Properties != nil && result.Properties.InstanceView != nil {
+			state := *(*result.Properties.InstanceView.Statuses)[1].DisplayStatus
+			return state, err
 		}
 
-		return "UNKNOWN", e
+		return lvm.VMUnknown, err
 	})
 
-	state, err := poller.PollAsNeeded()
+	state, err := poller.pollAsNeeded()
 	if err != nil {
 		return err
 	}
 
-	if state != Running {
-		return fmt.Errorf("start failed with a status of '%s'.", state)
+	if state != running {
+		return fmt.Errorf("start failed with a status of '%s'", state)
 	}
 	return nil
 }

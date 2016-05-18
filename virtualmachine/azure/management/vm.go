@@ -1,7 +1,7 @@
 // Copyright 2016 Apcera Inc. All rights reserved.
 
-// Package azure provides methods for creating and manipulating VMs on Azure.
-package azure
+// Package management provides methods for creating and manipulating VMs on Azure using management API.
+package management
 
 import (
 	"fmt"
@@ -239,7 +239,8 @@ func (vm *VM) Halt() error {
 		return fmt.Errorf(errGetClient, err)
 	}
 
-	reqID, err := vmclient.ShutdownRole(vm.ServiceName, vm.Name, vm.Name)
+	reqID, err := vmclient.ShutdownRole(vm.ServiceName, vm.Name, vm.Name, virtualmachine.PostShutdownActionStopped)
+
 	if err != nil {
 		return err
 	}
