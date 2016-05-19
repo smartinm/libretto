@@ -41,7 +41,7 @@
 			"importpath": "github.com/aws/aws-sdk-go/aws",
 			"repository": "https://github.com/aws/aws-sdk-go",
 			"vcs": "git",
-			"revision": "be2ec39e520e3c4088c0c6288055bdc8184a89ee",
+			"revision": "83c400dd354759bdb2fb49f9c6e53cee3e0c9484",
 			"branch": "HEAD",
 			"path": "/aws",
 			"notests": true
@@ -50,7 +50,7 @@
 			"importpath": "github.com/aws/aws-sdk-go/private/endpoints",
 			"repository": "https://github.com/aws/aws-sdk-go",
 			"vcs": "git",
-			"revision": "be2ec39e520e3c4088c0c6288055bdc8184a89ee",
+			"revision": "83c400dd354759bdb2fb49f9c6e53cee3e0c9484",
 			"branch": "HEAD",
 			"path": "/private/endpoints",
 			"notests": true
@@ -59,7 +59,7 @@
 			"importpath": "github.com/aws/aws-sdk-go/private/protocol",
 			"repository": "https://github.com/aws/aws-sdk-go",
 			"vcs": "git",
-			"revision": "be2ec39e520e3c4088c0c6288055bdc8184a89ee",
+			"revision": "83c400dd354759bdb2fb49f9c6e53cee3e0c9484",
 			"branch": "HEAD",
 			"path": "/private/protocol",
 			"notests": true
@@ -68,7 +68,7 @@
 			"importpath": "github.com/aws/aws-sdk-go/private/signer/v4",
 			"repository": "https://github.com/aws/aws-sdk-go",
 			"vcs": "git",
-			"revision": "be2ec39e520e3c4088c0c6288055bdc8184a89ee",
+			"revision": "83c400dd354759bdb2fb49f9c6e53cee3e0c9484",
 			"branch": "HEAD",
 			"path": "/private/signer/v4",
 			"notests": true
@@ -77,7 +77,7 @@
 			"importpath": "github.com/aws/aws-sdk-go/private/waiter",
 			"repository": "https://github.com/aws/aws-sdk-go",
 			"vcs": "git",
-			"revision": "be2ec39e520e3c4088c0c6288055bdc8184a89ee",
+			"revision": "83c400dd354759bdb2fb49f9c6e53cee3e0c9484",
 			"branch": "HEAD",
 			"path": "/private/waiter",
 			"notests": true
@@ -86,7 +86,7 @@
 			"importpath": "github.com/aws/aws-sdk-go/service/ec2",
 			"repository": "https://github.com/aws/aws-sdk-go",
 			"vcs": "git",
-			"revision": "be2ec39e520e3c4088c0c6288055bdc8184a89ee",
+			"revision": "83c400dd354759bdb2fb49f9c6e53cee3e0c9484",
 			"branch": "HEAD",
 			"path": "/service/ec2",
 			"notests": true
@@ -95,7 +95,7 @@
 			"importpath": "github.com/aws/aws-sdk-go/service/sts",
 			"repository": "https://github.com/aws/aws-sdk-go",
 			"vcs": "git",
-			"revision": "be2ec39e520e3c4088c0c6288055bdc8184a89ee",
+			"revision": "83c400dd354759bdb2fb49f9c6e53cee3e0c9484",
 			"branch": "HEAD",
 			"path": "/service/sts",
 			"notests": true
