@@ -330,11 +330,7 @@ func (client *SSHClient) Run(command string, stdout io.Writer, stderr io.Writer)
 	session.Stdout = stdout
 	session.Stderr = stderr
 
-	if err := session.Run(command); err != nil {
-		return err
-	}
-
-	return nil
+	return session.Run(command)
 }
 
 // Upload uploads a new file via SSH (SCP)
@@ -423,7 +419,7 @@ func (client *SSHClient) WaitForSSH(maxWait time.Duration) error {
 			return nil
 		}
 
-		timePassed := time.Now().Sub(start)
+		timePassed := time.Since(start)
 		if timePassed >= maxWait {
 			break
 		}
