@@ -4,6 +4,7 @@
 package arm
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"strings"
@@ -17,6 +18,11 @@ import (
 	"github.com/Azure/go-autorest/autorest/azure"
 )
 
+var (
+	// ErrActionTimeout is returned when the Azure instance takes too long to enter waited state.
+	ErrActionTimeout = errors.New("Azure action timeout")
+)
+
 const (
 	// PublicIP is the index of the public IP address that GetIPs returns.
 	PublicIP = 0
@@ -24,8 +30,12 @@ const (
 	// PrivateIP is the index of the private IP address that GetIPs returns.
 	PrivateIP = 1
 
-	// DefaultTimeout is the maximum seconds to wait before failing to GetSSH.
-	defaultTimeout = 60
+	// sshTimeout is the maximum seconds to wait before failing to GetSSH.
+	sshTimeout = 60
+
+	// actionTimeout is the maximum seconds to wait before failing to
+	// any action on VM, such as Provision, Halt or Destroy.
+	actionTimeout = 90
 
 	// Running is status returned when the VM is running
 	running = "VM running"
@@ -74,9 +84,6 @@ type VM struct {
 	StorageAccount   string
 	StorageContainer string
 
-	// Authorizer to connect to Azure
-	Authorizer *azure.ServicePrincipalToken
-
 	// VM OS Properties
 	OsFile string
 
@@ -102,13 +109,6 @@ func (vm *VM) Provision() error {
 		return err
 	}
 
-	// Set up the authorizer
-	spt, err := NewServicePrincipalTokenFromCredentials(&vm.Creds, azure.PublicCloud.ResourceManagerEndpoint)
-	if err != nil {
-		return err
-	}
-	vm.Authorizer = spt
-
 	// Set up private members of the VM
 	tempName := fmt.Sprintf("%s-%s", vm.Name, randStringRunes(6))
 	vm.OsFile = tempName + "-os-disk.vhd"
@@ -129,22 +129,28 @@ func (vm *VM) Provision() error {
 		return err
 	}
 
-	return cli.WaitForSSH(defaultTimeout * time.Second)
+	return cli.WaitForSSH(sshTimeout * time.Second)
 }
 
 // GetIPs returns the IP addresses of the Azure VM instance.
 func (vm *VM) GetIPs() ([]net.IP, error) {
 	ips := make([]net.IP, 2)
 
+	// Set up the authorizer
+	authorizer, err := getServicePrincipalToken(&vm.Creds, azure.PublicCloud.ResourceManagerEndpoint)
+	if err != nil {
+		return nil, err
+	}
+
 	// Get the Public IP
-	ip, err := vm.getPublicIP()
+	ip, err := vm.getPublicIP(authorizer)
 	if err != nil {
 		return nil, err
 	}
 	ips[PublicIP] = ip
 
 	// Get the Private IP
-	ip, err = vm.getPrivateIP()
+	ip, err = vm.getPrivateIP(authorizer)
 	if err != nil {
 		return nil, err
 	}
@@ -175,8 +181,14 @@ func (vm *VM) GetSSH(options ssh.Options) (ssh.Client, error) {
 //     "running"
 //     "stopped"
 func (vm *VM) GetState() (string, error) {
+	// Set up the authorizer
+	authorizer, err := getServicePrincipalToken(&vm.Creds, azure.PublicCloud.ResourceManagerEndpoint)
+	if err != nil {
+		return "", err
+	}
+
 	virtualMachinesClient := compute.NewVirtualMachinesClient(vm.Creds.SubscriptionID)
-	virtualMachinesClient.Authorizer = vm.Authorizer
+	virtualMachinesClient.Authorizer = authorizer
 
 	r, e := virtualMachinesClient.Get(vm.ResourceGroup, vm.Name, "InstanceView")
 	if r.Properties != nil && r.Properties.InstanceView != nil {
@@ -188,111 +200,118 @@ func (vm *VM) GetState() (string, error) {
 
 // Destroy deletes the VM on Azure.
 func (vm *VM) Destroy() error {
+	// Set up the authorizer
+	authorizer, err := getServicePrincipalToken(&vm.Creds, azure.PublicCloud.ResourceManagerEndpoint)
+	if err != nil {
+		return err
+	}
+
 	// Delete the VM
 	virtualMachinesClient := compute.NewVirtualMachinesClient(vm.Creds.SubscriptionID)
-	virtualMachinesClient.Authorizer = vm.Authorizer
+	virtualMachinesClient.Authorizer = authorizer
 
-	_, err := virtualMachinesClient.Delete(vm.ResourceGroup, vm.Name, nil)
+	_, err = virtualMachinesClient.Delete(vm.ResourceGroup, vm.Name, nil)
 	if err != nil {
 		return err
 	}
 
 	// Make sure VM is deleted
-	poller := newPoller(func() (string, error) {
-		result, err := virtualMachinesClient.Get(vm.ResourceGroup, vm.Name, "InstanceView")
-		if result.Properties != nil && result.Properties.InstanceView != nil {
-			state := *(*result.Properties.InstanceView.Statuses)[1].DisplayStatus
-			return translateState(state), err
+	deleted := false
+	for i := 0; i < actionTimeout; i++ {
+		_, err := vm.GetState()
+		if err != nil {
+			if strings.Contains(err.Error(), `Code="ResourceNotFound"`) {
+				deleted = true
+				break
+			}
+			return err
 		}
 
-		return lvm.VMUnknown, err
-	})
+		time.Sleep(1 * time.Second)
+	}
 
-	_, err = poller.pollAsNeeded()
-	if err != nil && !strings.Contains(err.Error(), `Code="ResourceNotFound"`) {
-		return err
+	if !deleted {
+		return ErrActionTimeout
 	}
 
 	// Delete the OS File of this VM
-	err = vm.deleteOSFile()
+	err = vm.deleteOSFile(authorizer)
 	if err != nil {
 		return err
 	}
 
 	// Delete the network interface of this VM
-	err = vm.deleteNic()
+	err = vm.deleteNic(authorizer)
 	if err != nil {
 		return err
 	}
 
 	// Delete the public IP of this VM
-	return vm.deletePublicIP()
+	return vm.deletePublicIP(authorizer)
 }
 
 // Halt shuts down the VM.
 func (vm *VM) Halt() error {
+	// Set up the authorizer
+	authorizer, err := getServicePrincipalToken(&vm.Creds, azure.PublicCloud.ResourceManagerEndpoint)
+	if err != nil {
+		return err
+	}
+
 	// Poweroff the VM
 	virtualMachinesClient := compute.NewVirtualMachinesClient(vm.Creds.SubscriptionID)
-	virtualMachinesClient.Authorizer = vm.Authorizer
+	virtualMachinesClient.Authorizer = authorizer
 
-	_, err := virtualMachinesClient.PowerOff(vm.ResourceGroup, vm.Name, nil)
+	_, err = virtualMachinesClient.PowerOff(vm.ResourceGroup, vm.Name, nil)
 	if err != nil {
 		return err
 	}
 
 	// Make sure the VM is stopped
-	poller := newPoller(func() (string, error) {
-		result, err := virtualMachinesClient.Get(vm.ResourceGroup, vm.Name, "InstanceView")
-		if result.Properties != nil && result.Properties.InstanceView != nil {
-			state := *(*result.Properties.InstanceView.Statuses)[1].DisplayStatus
-			return state, err
+	for i := 0; i < actionTimeout; i++ {
+		state, err := vm.GetState()
+		if err != nil {
+			return err
+		}
+		if state == lvm.VMHalted {
+			return nil
 		}
 
-		return lvm.VMUnknown, err
-	})
-
-	state, err := poller.pollAsNeeded()
-	if err != nil {
-		return err
+		time.Sleep(1 * time.Second)
 	}
-
-	if state != stopped {
-		return fmt.Errorf("halt failed with a status of '%s'", state)
-	}
-	return nil
+	return ErrActionTimeout
 }
 
 // Start boots a stopped VM.
 func (vm *VM) Start() error {
+	// Set up the authorizer
+	authorizer, err := getServicePrincipalToken(&vm.Creds, azure.PublicCloud.ResourceManagerEndpoint)
+	if err != nil {
+		return err
+	}
+
 	// Start the VM
 	virtualMachinesClient := compute.NewVirtualMachinesClient(vm.Creds.SubscriptionID)
-	virtualMachinesClient.Authorizer = vm.Authorizer
+	virtualMachinesClient.Authorizer = authorizer
 
-	_, err := virtualMachinesClient.Start(vm.ResourceGroup, vm.Name, nil)
+	_, err = virtualMachinesClient.Start(vm.ResourceGroup, vm.Name, nil)
 	if err != nil {
 		return err
 	}
 
 	// Make sure the VM is running
-	poller := newPoller(func() (string, error) {
-		result, err := virtualMachinesClient.Get(vm.ResourceGroup, vm.Name, "InstanceView")
-		if result.Properties != nil && result.Properties.InstanceView != nil {
-			state := *(*result.Properties.InstanceView.Statuses)[1].DisplayStatus
-			return state, err
+	for i := 0; i < actionTimeout; i++ {
+		state, err := vm.GetState()
+		if err != nil {
+			return err
+		}
+		if state == lvm.VMRunning {
+			return nil
 		}
 
-		return lvm.VMUnknown, err
-	})
-
-	state, err := poller.pollAsNeeded()
-	if err != nil {
-		return err
+		time.Sleep(1 * time.Second)
 	}
-
-	if state != running {
-		return fmt.Errorf("start failed with a status of '%s'", state)
-	}
-	return nil
+	return ErrActionTimeout
 }
 
 // Suspend returns an error because it is not supported on Azure.

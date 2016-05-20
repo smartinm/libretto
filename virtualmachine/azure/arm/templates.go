@@ -1,87 +1,85 @@
 package arm
 
-// Linux is the default arm template to provision a libretto (Linux) vm on Azure
+// Linux is the d efault arm template to provision a libretto (Linux) vm on Azure
 const Linux = `{
   "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "adminUsername": {
+    "username": {
       "type": "string"
     },
-    "adminPassword": {
+    "password": {
       "type": "string"
     },
-    "imagePublisher": {
+    "image_publisher": {
       "type": "string"
     },
-    "imageOffer": {
+    "image_offer": {
       "type": "string"
     },
-    "imageSku": {
+    "image_sku": {
       "type": "string"
     },
-    "networkSecurityGroup": {
+    "network_security_group": {
       "type": "string"
     },
-    "nicName": {
+    "nic": {
       "type": "string"
     },    
-    "osFileName": {
+    "os_file": {
       "type": "string"
     },
-    "publicIPName": {
+    "public_ip": {
       "type": "string"
     },
-    "sshAuthorizedKey": {
+    "ssh_authorized_key": {
       "type": "string"
     },
-    "storageAccountName": {
+    "storage_account": {
       "type": "string"
     },
-    "storageContainerName": {
+    "storage_container": {
       "type": "string"
     },
-    "subnetName": {
+    "subnet": {
       "type": "string"
     },
-    "virtualNetworkName": {
+    "virtual_network": {
       "type": "string"
     },
-    "vmSize": {
+    "vm_size": {
       "type": "string"
     },
-    "vmName": {
+    "vm_name": {
       "type": "string"
     }
   },
   "variables": {
-    "apiVersion": "2015-06-15",
+    "api_version": "2015-06-15",
     "location": "[resourceGroup().location]",
-    "publicIPAddressType": "Dynamic",
-    "subnetRef": "[concat(variables('vnetID'),'/subnets/',parameters('subnetName'))]",
-    "sshKeyPath": "[concat('/home/',parameters('adminUsername'),'/.ssh/authorized_keys')]",
-    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
+    "subnet_ref": "[concat(variables('vnet_id'),'/subnets/',parameters('subnet'))]",
+    "vnet_id": "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtual_network'))]"
   },
   "resources": [
     {
-      "apiVersion": "[variables('apiVersion')]",
+      "apiVersion": "[variables('api_version')]",
       "type": "Microsoft.Network/publicIPAddresses",
-      "name": "[parameters('publicIPName')]",
+      "name": "[parameters('public_ip')]",
       "location": "[variables('location')]",
       "properties": {
-        "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
+        "publicIPAllocationMethod": "Dynamic",
         "dnsSettings": {
-          "domainNameLabel": "[parameters('publicIPName')]"
+          "domainNameLabel": "[parameters('public_ip')]"
         }
       }
     },
     {
-      "apiVersion": "[variables('apiVersion')]",
+      "apiVersion": "[variables('api_version')]",
       "type": "Microsoft.Network/networkInterfaces",
-      "name": "[parameters('nicName')]",
+      "name": "[parameters('nic')]",
       "location": "[variables('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', parameters('publicIPName'))]"
+        "[concat('Microsoft.Network/publicIPAddresses/', parameters('public_ip'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -90,50 +88,50 @@ const Linux = `{
             "properties": {
               "privateIPAllocationMethod": "Dynamic",
               "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIPName'))]"
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('public_ip'))]"
               },
               "subnet": {
-                "id": "[variables('subnetRef')]"
+                "id": "[variables('subnet_ref')]"
               }
             }
           }
         ],
         "networkSecurityGroup": {
-          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroup'))]"
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('network_security_group'))]"
         }
       }
     },
     {
-      "apiVersion": "[variables('apiVersion')]",
+      "apiVersion": "[variables('api_version')]",
       "type": "Microsoft.Compute/virtualMachines",
-      "name": "[parameters('vmName')]",
+      "name": "[parameters('vm_name')]",
       "location": "[variables('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', parameters('nicName'))]"
+        "[concat('Microsoft.Network/networkInterfaces/', parameters('nic'))]"
       ],
       "properties": {
         "hardwareProfile": {
-          "vmSize": "[parameters('vmSize')]"
+          "vmSize": "[parameters('vm_size')]"
         },
         "osProfile": {
-          "computerName": "[parameters('vmName')]",
-          "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]",
+          "computerName": "[parameters('vm_name')]",
+          "adminUsername": "[parameters('username')]",
+          "adminPassword": "[parameters('password')]",
           "linuxConfiguration": {
             "disablePasswordAuthentication": "false"
           }
         },
         "storageProfile": {
           "imageReference": {
-            "publisher": "[parameters('imagePublisher')]",
-            "offer": "[parameters('imageOffer')]",
-            "sku": "[parameters('imageSku')]",
+            "publisher": "[parameters('image_publisher')]",
+            "offer": "[parameters('image_offer')]",
+            "sku": "[parameters('image_sku')]",
             "version": "latest"
           },
           "osDisk": {
             "name": "osdisk",
             "vhd": {
-              "uri": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net/',parameters('storageContainerName'),'/', parameters('osFileName'))]"
+              "uri": "[concat('http://',parameters('storage_account'),'.blob.core.windows.net/',parameters('storage_container'),'/', parameters('os_file'))]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -142,7 +140,7 @@ const Linux = `{
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('nicName'))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('nic'))]"
             }
           ]
         },

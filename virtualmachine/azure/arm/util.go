@@ -18,9 +18,9 @@ import (
 	"github.com/Azure/go-autorest/autorest/azure"
 )
 
-// NewServicePrincipalTokenFromCredentials creates a new ServicePrincipalToken using values of the
+// getServicePrincipalToken retrieves a new ServicePrincipalToken using values of the
 // passed credentials map.
-func NewServicePrincipalTokenFromCredentials(creds *OAuthCredentials, scope string) (*azure.ServicePrincipalToken, error) {
+func getServicePrincipalToken(creds *OAuthCredentials, scope string) (*azure.ServicePrincipalToken, error) {
 	oauthConfig, err := azure.PublicCloud.OAuthConfigForTenant(creds.TenantID)
 	if err != nil {
 		return nil, err
@@ -28,78 +28,48 @@ func NewServicePrincipalTokenFromCredentials(creds *OAuthCredentials, scope stri
 	return azure.NewServicePrincipalToken(*oauthConfig, creds.ClientID, creds.ClientSecret, scope)
 }
 
-type templateParameter struct {
+type armParameter struct {
 	Value string `json:"value"`
 }
 
-type templateParameters struct {
-	AdminUsername        *templateParameter `json:"adminUsername,omitempty"`
-	AdminPassword        *templateParameter `json:"adminPassword,omitempty"`
-	ImageOffer           *templateParameter `json:"imageOffer,omitempty"`
-	ImagePublisher       *templateParameter `json:"imagePublisher,omitempty"`
-	ImageSku             *templateParameter `json:"imageSku,omitempty"`
-	NetworkSecurityGroup *templateParameter `json:"networkSecurityGroup,omitempty"`
-	NicName              *templateParameter `json:"nicName,omitempty"`
-	OSFileName           *templateParameter `json:"osFileName,omitempty"`
-	PublicIPName         *templateParameter `json:"publicIPName,omitempty"`
-	SSHAuthorizedKey     *templateParameter `json:"sshAuthorizedKey,omitempty"`
-	SubnetName           *templateParameter `json:"subnetName,omitempty"`
-	VirtualNetworkName   *templateParameter `json:"virtualNetworkName,omitempty"`
-	StorageAccountName   *templateParameter `json:"storageAccountName,omitempty"`
-	StorageContainerName *templateParameter `json:"storageContainerName,omitempty"`
-	VMSize               *templateParameter `json:"vmSize,omitempty"`
-	VMName               *templateParameter `json:"vmName,omitempty"`
+type armParameters struct {
+	AdminUsername        *armParameter `json:"username,omitempty"`
+	AdminPassword        *armParameter `json:"password,omitempty"`
+	ImageOffer           *armParameter `json:"image_offer,omitempty"`
+	ImagePublisher       *armParameter `json:"image_publisher,omitempty"`
+	ImageSku             *armParameter `json:"image_sku,omitempty"`
+	NetworkSecurityGroup *armParameter `json:"network_security_group,omitempty"`
+	NicName              *armParameter `json:"nic,omitempty"`
+	OSFileName           *armParameter `json:"os_file,omitempty"`
+	PublicIPName         *armParameter `json:"public_ip,omitempty"`
+	SSHAuthorizedKey     *armParameter `json:"ssh_authorized_key,omitempty"`
+	SubnetName           *armParameter `json:"subnet,omitempty"`
+	VirtualNetworkName   *armParameter `json:"virtual_network,omitempty"`
+	StorageAccountName   *armParameter `json:"storage_account,omitempty"`
+	StorageContainerName *armParameter `json:"storage_container,omitempty"`
+	VMSize               *armParameter `json:"vm_size,omitempty"`
+	VMName               *armParameter `json:"vm_name,omitempty"`
 }
 
-type poller struct {
-	getProvisioningState func() (string, error)
-	pause                func()
-}
-
-func newPoller(getProvisioningState func() (string, error)) *poller {
-	pollDuration := time.Second * 1
-
-	return &poller{
-		getProvisioningState: getProvisioningState,
-		pause:                func() { time.Sleep(pollDuration) },
-	}
-}
-
-func (t *poller) pollAsNeeded() (string, error) {
-	for {
-		res, err := t.getProvisioningState()
-		if err != nil {
-			return res, err
-		}
-
-		switch res {
-		case running, stopped, succeeded:
-			return res, nil
-		}
-
-		t.pause()
-	}
-}
-
-// Translates the given VM to arm template parameters
-func (vm *VM) toTemplateParameters() *templateParameters {
-	return &templateParameters{
-		AdminUsername:        &templateParameter{vm.SSHCreds.SSHUser},
-		AdminPassword:        &templateParameter{vm.SSHCreds.SSHPassword},
-		ImageOffer:           &templateParameter{vm.ImageOffer},
-		ImagePublisher:       &templateParameter{vm.ImagePublisher},
-		ImageSku:             &templateParameter{vm.ImageSku},
-		NetworkSecurityGroup: &templateParameter{vm.NetworkSecurityGroup},
-		NicName:              &templateParameter{vm.Nic},
-		OSFileName:           &templateParameter{vm.OsFile},
-		PublicIPName:         &templateParameter{vm.PublicIP},
-		SSHAuthorizedKey:     &templateParameter{vm.SSHCreds.SSHPrivateKey},
-		StorageAccountName:   &templateParameter{vm.StorageAccount},
-		StorageContainerName: &templateParameter{vm.StorageContainer},
-		SubnetName:           &templateParameter{vm.Subnet},
-		VirtualNetworkName:   &templateParameter{vm.VirtualNetwork},
-		VMSize:               &templateParameter{vm.Size},
-		VMName:               &templateParameter{vm.Name},
+// Translates the given VM to arm parameters
+func (vm *VM) toARMParameters() *armParameters {
+	return &armParameters{
+		AdminUsername:        &armParameter{vm.SSHCreds.SSHUser},
+		AdminPassword:        &armParameter{vm.SSHCreds.SSHPassword},
+		ImageOffer:           &armParameter{vm.ImageOffer},
+		ImagePublisher:       &armParameter{vm.ImagePublisher},
+		ImageSku:             &armParameter{vm.ImageSku},
+		NetworkSecurityGroup: &armParameter{vm.NetworkSecurityGroup},
+		NicName:              &armParameter{vm.Nic},
+		OSFileName:           &armParameter{vm.OsFile},
+		PublicIPName:         &armParameter{vm.PublicIP},
+		SSHAuthorizedKey:     &armParameter{vm.SSHCreds.SSHPrivateKey},
+		StorageAccountName:   &armParameter{vm.StorageAccount},
+		StorageContainerName: &armParameter{vm.StorageContainer},
+		SubnetName:           &armParameter{vm.Subnet},
+		VirtualNetworkName:   &armParameter{vm.VirtualNetwork},
+		VMSize:               &armParameter{vm.Size},
+		VMName:               &armParameter{vm.Name},
 	}
 }
 
@@ -162,17 +132,22 @@ func validateVM(vm *VM) error {
 // deploy deploys the given VM based on the default Linux arm template over the
 // VM's resource group.
 func (vm *VM) deploy() error {
+	// Set up the authorizer
+	authorizer, err := getServicePrincipalToken(&vm.Creds, azure.PublicCloud.ResourceManagerEndpoint)
+	if err != nil {
+		return err
+	}
+
 	// Pass the parameters to the arm templacte
-	var templateParameters = vm.toTemplateParameters()
-	factory := deploymentFactory{template: Linux}
-	deployment, err := factory.create(*templateParameters)
+	vmParams := vm.toARMParameters()
+	deployment, err := createDeployment(Linux, *vmParams)
 	if err != nil {
 		return err
 	}
 
 	// Create and send the deployment to the resource group
 	deploymentsClient := resources.NewDeploymentsClient(vm.Creds.SubscriptionID)
-	deploymentsClient.Authorizer = vm.Authorizer
+	deploymentsClient.Authorizer = authorizer
 
 	_, err = deploymentsClient.CreateOrUpdate(vm.ResourceGroup, deploymentName, *deployment, nil)
 	if err != nil {
@@ -180,30 +155,27 @@ func (vm *VM) deploy() error {
 	}
 
 	// Make sure the deployment is succeeded
-	poller := newPoller(func() (string, error) {
+	for i := 0; i < actionTimeout; i++ {
 		result, err := deploymentsClient.Get(vm.ResourceGroup, deploymentName)
+		if err != nil {
+			return err
+		}
 		if result.Properties != nil && result.Properties.ProvisioningState != nil {
-			return *result.Properties.ProvisioningState, err
+			if *result.Properties.ProvisioningState == succeeded {
+				return nil
+			}
 		}
 
-		return lvm.VMUnknown, err
-	})
-
-	pollStatus, err := poller.pollAsNeeded()
-	if err != nil {
-		return err
+		time.Sleep(1 * time.Second)
 	}
 
-	if pollStatus != succeeded {
-		return fmt.Errorf("deployment failed with a status of '%s'", pollStatus)
-	}
-	return nil
+	return ErrActionTimeout
 }
 
 // getPublicIP returns the public IP of the given VM, if exists one.
-func (vm *VM) getPublicIP() (net.IP, error) {
+func (vm *VM) getPublicIP(authorizer *azure.ServicePrincipalToken) (net.IP, error) {
 	publicIPAddressesClient := network.NewPublicIPAddressesClient(vm.Creds.SubscriptionID)
-	publicIPAddressesClient.Authorizer = vm.Authorizer
+	publicIPAddressesClient.Authorizer = authorizer
 
 	resPublicIP, err := publicIPAddressesClient.Get(vm.ResourceGroup, vm.PublicIP, "")
 	if err != nil {
@@ -217,9 +189,9 @@ func (vm *VM) getPublicIP() (net.IP, error) {
 }
 
 // getPrivateIP returns the private IP of the given VM, if exists one.
-func (vm *VM) getPrivateIP() (net.IP, error) {
+func (vm *VM) getPrivateIP(authorizer *azure.ServicePrincipalToken) (net.IP, error) {
 	interfaceClient := network.NewInterfacesClient(vm.Creds.SubscriptionID)
-	interfaceClient.Authorizer = vm.Authorizer
+	interfaceClient.Authorizer = authorizer
 
 	resPrivateIP, err := interfaceClient.Get(vm.ResourceGroup, vm.Nic, "")
 	if err != nil {
@@ -238,9 +210,9 @@ func (vm *VM) getPrivateIP() (net.IP, error) {
 
 // deleteOSFile deletes the OS file from the VM's storage account, returns an error if the operation
 // does not succeed.
-func (vm *VM) deleteOSFile() error {
+func (vm *VM) deleteOSFile(authorizer *azure.ServicePrincipalToken) error {
 	storageAccountsClient := armStorage.NewAccountsClient(vm.Creds.SubscriptionID)
-	storageAccountsClient.Authorizer = vm.Authorizer
+	storageAccountsClient.Authorizer = authorizer
 
 	accountKeys, err := storageAccountsClient.ListKeys(vm.ResourceGroup, vm.StorageAccount)
 	if err != nil {
@@ -259,9 +231,9 @@ func (vm *VM) deleteOSFile() error {
 
 // deleteNic deletes the network interface for the given VM from the VM's resource group, returns an error
 // if the operation does not succeed.
-func (vm *VM) deleteNic() error {
+func (vm *VM) deleteNic(authorizer *azure.ServicePrincipalToken) error {
 	interfaceClient := network.NewInterfacesClient(vm.Creds.SubscriptionID)
-	interfaceClient.Authorizer = vm.Authorizer
+	interfaceClient.Authorizer = authorizer
 
 	_, err := interfaceClient.Delete(vm.ResourceGroup, vm.Nic, nil)
 	return err
@@ -269,26 +241,22 @@ func (vm *VM) deleteNic() error {
 
 // deletePublicIP deletes the reserved Public IP of the given VM from the VM's resource group, returns an error
 // if the operation does not succeed.
-func (vm *VM) deletePublicIP() error {
+func (vm *VM) deletePublicIP(authorizer *azure.ServicePrincipalToken) error {
 	// Delete the Public IP of this VM
 	publicIPAddressesClient := network.NewPublicIPAddressesClient(vm.Creds.SubscriptionID)
-	publicIPAddressesClient.Authorizer = vm.Authorizer
+	publicIPAddressesClient.Authorizer = authorizer
 
 	_, err := publicIPAddressesClient.Delete(vm.ResourceGroup, vm.PublicIP, nil)
 	return err
 }
 
-type deploymentFactory struct {
-	template string
-}
-
-func (f *deploymentFactory) create(tempParams templateParameters) (*resources.Deployment, error) {
-	template, err := f.getTemplate()
+func createDeployment(template string, params armParameters) (*resources.Deployment, error) {
+	templateMap, err := unmarshalTemplate(template)
 	if err != nil {
 		return nil, err
 	}
 
-	parameters, err := f.getTemplateParameters(tempParams)
+	parametersMap, err := unmarshalParameters(params)
 	if err != nil {
 		return nil, err
 	}
@@ -296,15 +264,15 @@ func (f *deploymentFactory) create(tempParams templateParameters) (*resources.De
 	return &resources.Deployment{
 		Properties: &resources.DeploymentProperties{
 			Mode:       resources.Incremental,
-			Template:   template,
-			Parameters: parameters,
+			Template:   templateMap,
+			Parameters: parametersMap,
 		},
 	}, nil
 }
 
-func (f *deploymentFactory) getTemplate() (*map[string]interface{}, error) {
+func unmarshalTemplate(template string) (*map[string]interface{}, error) {
 	var t map[string]interface{}
-	err := json.Unmarshal([]byte(f.template), &t)
+	err := json.Unmarshal([]byte(template), &t)
 
 	if err != nil {
 		return nil, err
@@ -313,8 +281,8 @@ func (f *deploymentFactory) getTemplate() (*map[string]interface{}, error) {
 	return &t, nil
 }
 
-func (f *deploymentFactory) getTemplateParameters(tempParams templateParameters) (*map[string]interface{}, error) {
-	b, err := json.Marshal(tempParams)
+func unmarshalParameters(params armParameters) (*map[string]interface{}, error) {
+	b, err := json.Marshal(params)
 	if err != nil {
 		return nil, err
 	}
