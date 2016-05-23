@@ -2,11 +2,20 @@
 	"version": 0,
 	"dependencies": [
 		{
+			"importpath": "github.com/Azure/azure-sdk-for-go/arm",
+			"repository": "https://github.com/Azure/azure-sdk-for-go",
+			"vcs": "git",
+			"revision": "e63b145735f55e62d280a3904a28494007fc68b7",
+			"branch": "master",
+			"path": "/arm",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/Azure/azure-sdk-for-go/core/http",
 			"repository": "https://github.com/Azure/azure-sdk-for-go",
 			"vcs": "git",
-			"revision": "95361a2573b1fa92a00c5fc2707a80308483c6f9",
-			"branch": "HEAD",
+			"revision": "e63b145735f55e62d280a3904a28494007fc68b7",
+			"branch": "master",
 			"path": "/core/http",
 			"notests": true
 		},
@@ -14,8 +23,8 @@
 			"importpath": "github.com/Azure/azure-sdk-for-go/core/tls",
 			"repository": "https://github.com/Azure/azure-sdk-for-go",
 			"vcs": "git",
-			"revision": "95361a2573b1fa92a00c5fc2707a80308483c6f9",
-			"branch": "HEAD",
+			"revision": "e63b145735f55e62d280a3904a28494007fc68b7",
+			"branch": "master",
 			"path": "/core/tls",
 			"notests": true
 		},
@@ -23,9 +32,27 @@
 			"importpath": "github.com/Azure/azure-sdk-for-go/management",
 			"repository": "https://github.com/Azure/azure-sdk-for-go",
 			"vcs": "git",
-			"revision": "95361a2573b1fa92a00c5fc2707a80308483c6f9",
-			"branch": "HEAD",
+			"revision": "e63b145735f55e62d280a3904a28494007fc68b7",
+			"branch": "master",
 			"path": "/management",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/Azure/azure-sdk-for-go/storage",
+			"repository": "https://github.com/Azure/azure-sdk-for-go",
+			"vcs": "git",
+			"revision": "e63b145735f55e62d280a3904a28494007fc68b7",
+			"branch": "master",
+			"path": "/storage",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/Azure/go-autorest/autorest",
+			"repository": "https://github.com/Azure/go-autorest",
+			"vcs": "git",
+			"revision": "4bdf29b663ebad9598d2c391b73a4b46bdedbf42",
+			"branch": "master",
+			"path": "/autorest",
 			"notests": true
 		},
 		{
@@ -98,6 +125,14 @@
 			"revision": "be2ec39e520e3c4088c0c6288055bdc8184a89ee",
 			"branch": "HEAD",
 			"path": "/service/sts",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/dgrijalva/jwt-go",
+			"repository": "https://github.com/dgrijalva/jwt-go",
+			"vcs": "git",
+			"revision": "40bd0f3b4891a9d7f121bfb7b8e8b0525625e262",
+			"branch": "master",
 			"notests": true
 		},
 		{
