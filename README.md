@@ -73,6 +73,42 @@ if err := vm.Provision(); err != nil {
 
 ```
 
+Azure
+------
+
+``` go
+
+vm := &azure.VM{
+   Creds: azure.OAuthCredentials{
+     SubscriptionID: os.Getenv("AZURE_SUBSCRIPTION_ID"),
+     TenantID:       os.Getenv("AZURE_TENANT_ID"),
+     ClientID:       os.Getenv("AZURE_CLIENT_ID"),
+     ClientSecret:   os.Getenv("AZURE_CLIENT_SECRET"),
+   },
+   ImagePublisher:   "Canonical",
+   ImageOffer:       "UbuntuServer",
+   ImageSku:         "14.04.3-LTS",
+   Size:             "Standard_A1",
+   Name:             "libretto",
+   ResourceGroup:    "libretto-rg",
+   StorageAccount:   "libretto-sa",
+   StorageContainer: "libretto-sc",
+   SSHCreds: ssh.Credentials{
+     SSHUser:     os.Getenv("AZURE_USER"),
+     SSHPassword: os.Getenv("AZURE_PASSWORD"),
+   },
+
+   NetworkSecurityGroup: "libretto-sg",
+   VirtualNetwork:       "libretto-vn",
+   Subnet:               "libretto-sn",
+}
+
+if err := vm.Provision(); err != nil {
+      return err
+}
+
+```
+
 vSphere
 --------
 
