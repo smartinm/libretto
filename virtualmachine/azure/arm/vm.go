@@ -220,7 +220,8 @@ func (vm *VM) Destroy() error {
 	for i := 0; i < actionTimeout; i++ {
 		_, err := vm.GetState()
 		if err != nil {
-			if strings.Contains(err.Error(), `Code="ResourceNotFound"`) {
+			if strings.Contains(err.Error(), `Code="ResourceNotFound"`) ||
+				strings.Contains(err.Error(), `Code="NotFound"`) {
 				deleted = true
 				break
 			}
