@@ -144,6 +144,32 @@
 			"notests": true
 		},
 		{
+			"importpath": "github.com/golang/protobuf",
+			"repository": "https://github.com/golang/protobuf",
+			"vcs": "git",
+			"revision": "9e6977f30c91c78396e719e164e57f9287fff42c",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/golang/protobuf/proto",
+			"repository": "https://github.com/golang/protobuf",
+			"vcs": "git",
+			"revision": "9e6977f30c91c78396e719e164e57f9287fff42c",
+			"branch": "master",
+			"path": "/proto",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/golang/protobuf/proto/testdata",
+			"repository": "https://github.com/golang/protobuf",
+			"vcs": "git",
+			"revision": "9e6977f30c91c78396e719e164e57f9287fff42c",
+			"branch": "master",
+			"path": "/proto/testdata",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/jmespath/go-jmespath",
 			"repository": "https://github.com/jmespath/go-jmespath",
 			"vcs": "git",
@@ -218,6 +244,41 @@
 			"revision": "1d9fd3b8333e891c0e7353e1adcfe8a612573033",
 			"branch": "HEAD",
 			"path": "/context",
+			"notests": true
+		},
+		{
+			"importpath": "golang.org/x/oauth2",
+			"repository": "https://go.googlesource.com/oauth2",
+			"vcs": "git",
+			"revision": "c406a4cc4ba462e5dc2f16225c5bd9488f9cbe10",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "google.golang.org/api/compute/v1",
+			"repository": "https://code.googlesource.com/google-api-go-client",
+			"vcs": "git",
+			"revision": "aa89374d6f4a7f9ab85dcb3b01c95d2d3bd7f10a",
+			"branch": "master",
+			"path": "/compute/v1",
+			"notests": true
+		},
+		{
+			"importpath": "google.golang.org/api/gensupport",
+			"repository": "https://code.googlesource.com/google-api-go-client",
+			"vcs": "git",
+			"revision": "aa89374d6f4a7f9ab85dcb3b01c95d2d3bd7f10a",
+			"branch": "master",
+			"path": "/gensupport",
+			"notests": true
+		},
+		{
+			"importpath": "google.golang.org/api/googleapi",
+			"repository": "https://code.googlesource.com/google-api-go-client",
+			"vcs": "git",
+			"revision": "aa89374d6f4a7f9ab85dcb3b01c95d2d3bd7f10a",
+			"branch": "master",
+			"path": "/googleapi",
 			"notests": true
 		},
 		{

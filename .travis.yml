@@ -17,4 +17,4 @@ install: true # avoids go get. assumes all necessary code is in the repo
 script:
   - go build
   - go vet $(go list ./... | grep -v /vendor/)
-  - go test -v -race ./...
+  - go test -v -race $(go list ./... | grep -v /vendor/)

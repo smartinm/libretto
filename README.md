@@ -109,6 +109,146 @@ if err := vm.Provision(); err != nil {
 
 ```
 
+Digital Ocean
+--------------
+
+``` go
+token := os.Getenv("DIGITALOCEAN_API_KEY")
+if token == "" {
+    return fmt.Errorf("Please export your DigitalOcean API key to 'DIGITALOCEAN_API_KEY' and run again.")
+}
+config := digitalocean.Config{
+    Name:   defaultDropletName,
+    Region: defaultDropletRegion,
+    Image:  defaultDropletImage,
+    Size:   defaultDropletSize,
+}
+
+vm := digitalocean.VM{
+    APIToken: token,
+    Config:   config,
+}
+
+if err := vm.Provision(); err != nil {
+    return err
+}
+```
+
+Exoscale
+---------
+
+ ``` go
+
+  vm := exoscale.VM{
+     Config: exoscale.Config{
+       Endpoint:  "https://api.exoscale.ch/compute",
+       APIKey:    os.Getenv("EXOSCALE_API_KEY"),
+       APISecret: os.Getenv("EXOSCALE_API_SECRET"),
+     },
+     Template: exoscale.Template{
+       Name:      "Linux Ubuntu 16.04 LTS 64-bit",
+       StorageGB: 10,
+       ZoneName:  "ch-dk-2",
+     },
+     ServiceOffering: exoscale.ServiceOffering{
+       Name: exoscale.Medium,
+     },
+     SecurityGroups: []exoscale.SecurityGroup{
+       {Name: "default"},
+       {Name: "my sg"},
+     },
+     Zone: exoscale.Zone{
+       Name: "ch-dk-2",
+     },
+     KeypairName: "mydev",
+     Name:        "libretto-exoscale",
+     Userdata: `
+#cloud-config
+manage_etc_hosts: true
+fqdn: new.host
+`,
+  }
+
+  if err := vm.Provision(); err != nil {
+    fmt.Printf("Error provisioning machine: %s\n", err)
+  }
+
+  // get VM ID polling every 5 seconds, timeout after 30
+  vm.WaitVMCreation(30, 5)
+
+  ```
+
+Openstack
+----------
+
+``` go
+
+    metadata := openstack.NewDefaultImageMetadata()
+  volume := openstack.NewDefaultVolume()
+
+  vm := &openstack.VM{
+    IdentityEndpoint: os.Getenv("OS_AUTH_URL"),
+    Username:         os.Getenv("OS_USERNAME"),
+    Password:         os.Getenv("OS_PASSWORD"),
+    Region:           os.Getenv("OS_REGION_NAME"),
+    TenantName:       os.Getenv("OS_TENANT_NAME"),
+    FlavorName:       "m1.medium",
+    ImageID:          "",
+    ImageMetadata:    metadata,
+    ImagePath:        os.Getenv("OS_IMAGE_PATH"),
+    Volume:           volume,
+    InstanceID:       "",
+    Name:             "test",
+    Networks:         []string{"eab29109-3363-4b03-8a56-8fe27b71f3a0"},
+    FloatingIPPool:   "net04_ext",
+    FloatingIP:       nil,
+    SecurityGroup:    "test",
+    Credentials: ssh.Credentials{
+      SSHUser:     "ubuntu",
+      SSHPassword: "ubuntu",
+    },
+  }
+
+  err := vm.Provision()
+  if err != nil {
+        return err
+  }
+ ```
+
+ Google
+----------
+
+``` go
+
+vm := &google.VM{
+    Name:          "libretto-vm-1",
+    Zone:          "us-central1-a",
+    MachineType:   "n1-standard-1",
+    SourceImage:   "ubuntu-1404-trusty-v20160516",
+    DiskType:      "pd-standard",
+    DiskSize:      10,
+    Preemptible:   false,
+    Network:       "default",
+    Subnetwork:    "default",
+    UseInternalIP: false,
+    Scopes:        scopes,
+    Project:       os.Getenv("GOOGLE_PROJECT_ID"),
+
+    AccountFile: accountFile,
+    SSHCreds: ssh.Credentials{
+      SSHUser:       "ubuntu",
+      SSHPrivateKey: string(sshPrivateKey),
+    },
+    SSHPublicKey: string(sshPublicKey),
+    Tags:         []string{"libretto"},
+  }
+
+  err := vm.Provision()
+  if err != nil {
+        return err
+  }
+ ```
+
 vSphere
 --------
 
@@ -134,31 +274,6 @@ vm := &vsphere.VM{
 }
 if err := vm.Provision(); err != nil {
         return err
-}
-```
-
-Digital Ocean
---------------
-
-``` go
-token := os.Getenv("DIGITALOCEAN_API_KEY")
-if token == "" {
-    return fmt.Errorf("Please export your DigitalOcean API key to 'DIGITALOCEAN_API_KEY' and run again.")
-}
-config := digitalocean.Config{
-    Name:   defaultDropletName,
-    Region: defaultDropletRegion,
-    Image:  defaultDropletImage,
-    Size:   defaultDropletSize,
-}
-
-vm := digitalocean.VM{
-    APIToken: token,
-    Config:   config,
-}
-
-if err := vm.Provision(); err != nil {
-    return err
 }
 ```
 
@@ -203,87 +318,6 @@ if err := vm.Provision(); err != nil {
     return err
 }
 ```
-
-Openstack
-----------
-
-``` go
-
-    metadata := openstack.NewDefaultImageMetadata()
-	volume := openstack.NewDefaultVolume()
-
-	vm := &openstack.VM{
-		IdentityEndpoint: os.Getenv("OS_AUTH_URL"),
-		Username:         os.Getenv("OS_USERNAME"),
-		Password:         os.Getenv("OS_PASSWORD"),
-		Region:           os.Getenv("OS_REGION_NAME"),
-		TenantName:       os.Getenv("OS_TENANT_NAME"),
-		FlavorName:       "m1.medium",
-		ImageID:          "",
-		ImageMetadata:    metadata,
-		ImagePath:        os.Getenv("OS_IMAGE_PATH"),
-		Volume:           volume,
-		InstanceID:       "",
-		Name:             "test",
-		Networks:         []string{"eab29109-3363-4b03-8a56-8fe27b71f3a0"},
-		FloatingIPPool:   "net04_ext",
-		FloatingIP:       nil,
-		SecurityGroup:    "test",
-		Credentials: ssh.Credentials{
-			SSHUser:     "ubuntu",
-			SSHPassword: "ubuntu",
-		},
-	}
-
-	err := vm.Provision()
-	if err != nil {
-        return err
-	}
- ```
-
-Exoscale
----------
-
- ``` go
-
-  vm := exoscale.VM{
-     Config: exoscale.Config{
-       Endpoint:  "https://api.exoscale.ch/compute",
-       APIKey:    os.Getenv("EXOSCALE_API_KEY"),
-       APISecret: os.Getenv("EXOSCALE_API_SECRET"),
-     },
-     Template: exoscale.Template{
-       Name:      "Linux Ubuntu 16.04 LTS 64-bit",
-       StorageGB: 10,
-       ZoneName:  "ch-dk-2",
-     },
-     ServiceOffering: exoscale.ServiceOffering{
-       Name: exoscale.Medium,
-     },
-     SecurityGroups: []exoscale.SecurityGroup{
-       {Name: "default"},
-       {Name: "my sg"},
-     },
-     Zone: exoscale.Zone{
-       Name: "ch-dk-2",
-     },
-     KeypairName: "mydev",
-     Name:        "libretto-exoscale",
-     Userdata: `
-#cloud-config
-manage_etc_hosts: true
-fqdn: new.host
-`,
-  }
-
-  if err := vm.Provision(); err != nil {
- 		fmt.Printf("Error provisioning machine: %s\n", err)
- 	}
-
-  // get VM ID polling every 5 seconds, timeout after 30
-  vm.WaitVMCreation(30, 5)
-
-  ```
 
 
 FAQ
